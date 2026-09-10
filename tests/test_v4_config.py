@@ -40,6 +40,26 @@ class V4ConfigTests(unittest.TestCase):
         self.assertEqual(preset.planner_thinking, "")
         self.assertEqual(preset.deprecation_warnings, [])
 
+    def test_toml_preset_names_accept_model_style_dots(self) -> None:
+        path = self.root / "presets.toml"
+        path.write_text(
+            '\n'.join([
+                'default_preset = "grok-4.6"',
+                '[presets."grok-4.6"]',
+                'executor = "grok-4.6"',
+                '',
+                '[presets.compat.v1]',
+                'executor = "gpt-5.6-terra"',
+            ]),
+            encoding="utf-8",
+        )
+
+        presets = core.load_presets_toml(path)
+
+        self.assertEqual(set(presets), {"grok-4.6", "compat.v1"})
+        self.assertEqual(presets["grok-4.6"].executor_model, "grok-4.6")
+        self.assertEqual(core.default_preset_toml(path), "grok-4.6")
+
     def test_legacy_planner_fields_load_only_as_deprecation_warnings(self) -> None:
         path = self.root / "presets.json"
         path.write_text(json.dumps({

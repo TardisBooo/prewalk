@@ -23,6 +23,8 @@ from __future__ import annotations
 
 import json
 import os
+from pathlib import Path
+import re
 import sys
 
 import _engine  # noqa: F401  (makes prewalk_engine importable)
@@ -34,7 +36,22 @@ def codex_home() -> str:
 
 
 def store_file() -> str:
+    override = os.environ.get("PREWALK_STATE_FILE", "").strip()
+    if override:
+        return str(Path(os.path.expandvars(override)).expanduser())
     return os.path.join(codex_home(), "prewalk-state.json")
+
+
+def state_store_access() -> tuple[bool, str]:
+    """Probe the exact lock path used by the store and return a diagnostic."""
+    path = Path(store_file())
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with open(path.with_name(path.name + ".lock"), "a+b"):
+            pass
+    except OSError as exc:
+        return False, f"{path}: {exc}"
+    return True, str(path)
 
 
 def presets_file() -> str:
@@ -251,6 +268,21 @@ def _shell_applies_patch(payload: dict) -> bool:
     return any(head.rsplit("/", 1)[-1] == "apply_patch" for head in _command_heads(str(command)))
 
 
+_ORCHESTRATOR_PATCH_RE = re.compile(r"\btools(?:\.[A-Za-z0-9_]+)*\.apply_patch\s*\(")
+
+
+def _orchestrator_applies_patch(payload: dict) -> bool:
+    """Recognize apply_patch calls nested in the current free-form exec tool."""
+    tool_input = _event_part(payload, "tool_input", "toolInput")
+    if isinstance(tool_input, str):
+        source = tool_input
+    elif isinstance(tool_input, dict):
+        source = tool_input.get("input") or tool_input.get("code") or tool_input.get("script") or ""
+    else:
+        source = ""
+    return bool(_ORCHESTRATOR_PATCH_RE.search(str(source)))
+
+
 def _repoprompt_mutates(payload: dict) -> bool:
     tool_input = _event_part(payload, "tool_input", "toolInput") or {}
     if not isinstance(tool_input, dict):
@@ -300,7 +332,7 @@ def normalize_mutation_success(payload: dict) -> bool:
     if name in ("apply_patch", "edit", "write", "multiedit"):
         return True
     if name in ("bash", "exec", "exec_command"):
-        return _shell_applies_patch(payload)
+        return _shell_applies_patch(payload) or _orchestrator_applies_patch(payload)
     if name in ("rp", "repoprompt"):
         return _repoprompt_mutates(payload)
     return False

@@ -281,7 +281,11 @@ checkpoint validation and route confirmation are never skipped.
 | Codex | `~/.codex/prewalk-presets.toml` | TOML |
 | Claude Code | `~/.claude/prewalk-presets.json` | JSON |
 
-`CODEX_HOME` / `CLAUDE_CONFIG_DIR` relocate presets and state files wholesale. Templates:
+`CODEX_HOME` / `CLAUDE_CONFIG_DIR` relocate presets and state files wholesale.
+`PREWALK_STATE_FILE` overrides only the state file and must be an absolute writable path;
+this is useful when the project sandbox cannot write to the host config directory. Arm only
+succeeds after it prints `PREWALK ARMED`; otherwise fix the reported permission or preset error
+before continuing. Templates:
 [hosts/codex/presets.example.toml](hosts/codex/presets.example.toml),
 [hosts/claude/presets.example.json](hosts/claude/presets.example.json).
 
@@ -304,6 +308,11 @@ executor_effort = "medium"
 handoff_mode = "auto"
 require_model_routing = true
 ```
+
+Quote Codex TOML table names that contain periods, for example
+`[presets."grok-4.6"]`. On Codex surfaces without a native plan/todo tool, put
+the complete todo snapshot in the Handoff Packet as a strict Markdown checkbox
+list; the Stop hook validates and persists that fallback.
 
 Presets configure the executor only. Legacy `planner` / `planner_thinking` fields are ignored
 with a deprecation warning; `executor_thinking` is accepted as a deprecated alias of

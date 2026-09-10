@@ -108,13 +108,13 @@ check_claude() {
   CLAUDE_CONFIG_DIR="$TMP/claude-upgrade" claude plugin install prewalk@prewalk
   CLAUDE_CONFIG_DIR="$TMP/claude-upgrade" claude plugin list --json >"$TMP/claude-old.json"
   assert_plugin_version "$TMP/claude-old.json" claude 0.3.1
-  prepare_upgrade_fixture "$TMP/claude-market" claude 1.0.0
+  prepare_upgrade_fixture "$TMP/claude-market" claude 1.0.1
   CLAUDE_CONFIG_DIR="$TMP/claude-upgrade" claude plugin marketplace update prewalk
   CLAUDE_CONFIG_DIR="$TMP/claude-upgrade" claude plugin update prewalk@prewalk
   CLAUDE_CONFIG_DIR="$TMP/claude-upgrade" claude plugin list --json >"$TMP/claude-new.json"
-  assert_plugin_version "$TMP/claude-new.json" claude 1.0.0
+  assert_plugin_version "$TMP/claude-new.json" claude 1.0.1
   echo "PASS native contract: Claude $version; 9 skills, 1 agent, plugin-dir loader"
-  echo "PASS native upgrade: Claude 0.3.1 -> 1.0.0"
+  echo "PASS native upgrade: Claude 0.3.1 -> 1.0.1"
 }
 
 check_codex() {
@@ -147,14 +147,14 @@ PY
   CODEX_HOME="$TMP/codex-upgrade" codex plugin add prewalk@prewalk-marketplace --json >/dev/null
   CODEX_HOME="$TMP/codex-upgrade" codex plugin list --json >"$TMP/codex-old.json"
   assert_plugin_version "$TMP/codex-old.json" codex 0.3.1
-  prepare_upgrade_fixture "$TMP/codex-market" codex 1.0.0
+  prepare_upgrade_fixture "$TMP/codex-market" codex 1.0.1
   # Local marketplace fixtures refresh through plugin add; the upgrade command
   # intentionally accepts Git marketplaces only.
   CODEX_HOME="$TMP/codex-upgrade" codex plugin add prewalk@prewalk-marketplace --json >/dev/null
   CODEX_HOME="$TMP/codex-upgrade" codex plugin list --json >"$TMP/codex-new.json"
-  assert_plugin_version "$TMP/codex-new.json" codex 1.0.0
+  assert_plugin_version "$TMP/codex-new.json" codex 1.0.1
   echo "PASS native contract: Codex $version; isolated marketplace install discovered"
-  echo "PASS native upgrade: Codex 0.3.1 -> 1.0.0"
+  echo "PASS native upgrade: Codex 0.3.1 -> 1.0.1"
 }
 
 case "$TARGET" in

@@ -1,9 +1,12 @@
 from __future__ import annotations
 
+import io
 import importlib.util
 from pathlib import Path
 import sys
+import tempfile
 import unittest
+from unittest import mock
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -87,6 +90,73 @@ class ArmArgumentTests(unittest.TestCase):
             with self.subTest(payload=payload):
                 with self.assertRaises(ValueError):
                     parse(payload)
+
+    def test_codex_catalog_decode_failure_is_a_warning_not_a_crash(self) -> None:
+        module = self.modules["codex"]
+        completed = mock.Mock(returncode=0, stdout=None, stderr=None)
+        with mock.patch.object(module.subprocess, "run", return_value=completed) as run:
+            models, detail = module._codex_model_catalog()
+        self.assertIsNone(models)
+        self.assertIn("invalid response", detail)
+        self.assertEqual(run.call_args.kwargs["encoding"], "utf-8")
+        self.assertEqual(run.call_args.kwargs["errors"], "replace")
+
+    def test_unknown_preset_fails_instead_of_silently_falling_back(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            paths = {
+                "codex": root / "presets.toml",
+                "claude": root / "presets.json",
+            }
+            paths["codex"].write_text(
+                'default_preset = "known"\n[presets.known]\nexecutor = "executor"\n',
+                encoding="utf-8",
+            )
+            paths["claude"].write_text(
+                '{"default": "known", "presets": {"known": {"executor": "haiku"}}}',
+                encoding="utf-8",
+            )
+            for host, module in self.modules.items():
+                with self.subTest(host=host), mock.patch.object(
+                    module._common, "resolve_session_id", return_value="session"
+                ), mock.patch.object(
+                    module._common, "presets_file", return_value=str(paths[host])
+                ), mock.patch.object(module.core, "start_v4_run") as start, mock.patch(
+                    "sys.stderr", new_callable=io.StringIO
+                ) as stderr:
+                    self.assertEqual(module.cmd_arm("session", ["--preset", "missing"]), 2)
+                    self.assertIn("unknown preset 'missing'", stderr.getvalue())
+                    start.assert_not_called()
+
+    def test_arm_reports_state_permission_failure_without_traceback(self) -> None:
+        for host, module in self.modules.items():
+            with self.subTest(host=host), mock.patch.object(
+                module._common, "resolve_session_id", return_value="session"
+            ), mock.patch.object(
+                module._common, "presets_file", return_value="missing-presets"
+            ), mock.patch.object(
+                module._common, "store_file", return_value="X:/blocked/prewalk-state.json"
+            ), mock.patch.object(
+                module.core, "start_v4_run", side_effect=PermissionError(13, "denied")
+            ), mock.patch("sys.stderr", new_callable=io.StringIO) as stderr:
+                self.assertEqual(module.cmd_arm("session", ["Build and test feature"]), 1)
+                output = stderr.getvalue()
+                self.assertIn("durable state store is not writable", output)
+                self.assertIn("No Prewalk checkpoint was created", output)
+                self.assertNotIn("Traceback", output)
+
+    def test_windows_cli_resolution_prefers_cmd_shims(self) -> None:
+        pairs = (("codex", self.modules["codex"]), ("claude", self.modules["claude"]))
+        for name, module in pairs:
+            expected = f"C:/tools/{name}.cmd"
+
+            def resolve(candidate: str, *, expected=expected, name=name):
+                return expected if candidate == f"{name}.cmd" else None
+
+            with self.subTest(name=name), mock.patch.object(module.os, "name", "nt"), mock.patch.object(
+                module.shutil, "which", side_effect=resolve
+            ):
+                self.assertEqual(module._cli_executable(name), expected)
 
 
 if __name__ == "__main__":

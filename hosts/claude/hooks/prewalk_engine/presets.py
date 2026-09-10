@@ -124,7 +124,9 @@ def load_presets_json(path: str | os.PathLike[str]) -> dict[str, Preset]:
 # scope — a preset file that needs it is a preset file we reject loudly in
 # review rather than silently half-parse in a hook.
 _TOML_STRING_RE = re.compile(r'^"((?:[^"\\]|\\.)*)"$')
-_TOML_TABLE_RE = re.compile(r'^\[presets\.([A-Za-z0-9_-]+)\]\s*$')
+_TOML_TABLE_RE = re.compile(
+    r'^\[presets\.(?:"((?:[^"\\]|\\.)*)"|([A-Za-z0-9_.-]+))\]\s*$'
+)
 
 
 def load_presets_toml(path: str | os.PathLike[str]) -> dict[str, Preset]:
@@ -154,7 +156,12 @@ def load_presets_toml(path: str | os.PathLike[str]) -> dict[str, Preset]:
         if table:
             if current is not None:
                 _flush_preset(presets, current, bucket)
-            current = table.group(1)
+            quoted_name, bare_name = table.groups()
+            current = (
+                quoted_name.encode().decode("unicode_escape")
+                if quoted_name is not None
+                else bare_name
+            )
             bucket = {}
             continue
         if current is not None and "=" in line:

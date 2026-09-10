@@ -224,6 +224,16 @@ class HookAdapterTests(unittest.TestCase):
                 "tool_input": {"tool": "apply_edits", "args": {"path": "README.md"}},
                 "tool_response": {"success": True},
             },
+            {
+                "tool_name": "functions.exec",
+                "tool_input": "text(await tools.apply_patch('*** Begin Patch'))",
+                "tool_response": {"success": True},
+            },
+            {
+                "tool_name": "exec",
+                "tool_input": {"input": "const result = await tools.apply_patch(patch);"},
+                "tool_response": {"success": True},
+            },
         ]
         false_fixtures = [
             {
@@ -250,6 +260,11 @@ class HookAdapterTests(unittest.TestCase):
                 "tool_input": {"tool": "read_file", "args": {"path": "README.md"}},
                 "tool_response": {"success": True},
             },
+            {
+                "tool_name": "exec",
+                "tool_input": {"input": "text('tools.apply_patch is documented here')"},
+                "tool_response": {"success": True},
+            },
         ]
         for adapter in (self.codex, self.claude):
             for payload in true_fixtures:
@@ -258,6 +273,13 @@ class HookAdapterTests(unittest.TestCase):
             for payload in false_fixtures:
                 with self.subTest(adapter=adapter.__name__, payload=payload):
                     self.assertFalse(adapter.normalize_mutation_success(payload))
+
+    def test_state_file_override_is_shared_by_both_adapters(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            expected = str(Path(tmp) / "state.json")
+            with mock.patch.dict(os.environ, {"PREWALK_STATE_FILE": expected}, clear=False):
+                self.assertEqual(self.codex.store_file(), expected)
+                self.assertEqual(self.claude.store_file(), expected)
 
 
 if __name__ == "__main__":

@@ -266,7 +266,10 @@ $prewalk:prewalk Add a settings page with tests    (Codex)
 | Codex | `~/.codex/prewalk-presets.toml` | TOML |
 | Claude Code | `~/.claude/prewalk-presets.json` | JSON |
 
-`CODEX_HOME` / `CLAUDE_CONFIG_DIR` 可整体迁移预设与状态文件。模板：
+`CODEX_HOME` / `CLAUDE_CONFIG_DIR` 可整体迁移预设与状态文件。
+`PREWALK_STATE_FILE` 只覆盖状态文件，必须指向绝对且可写的路径；当项目沙箱不能写入
+宿主配置目录时可用此项。只有看到 `PREWALK ARMED` 才算武装成功；否则应先修复输出的
+权限或预设错误，再继续任务。模板：
 [hosts/codex/presets.example.toml](hosts/codex/presets.example.toml)、
 [hosts/claude/presets.example.json](hosts/claude/presets.example.json)。
 
@@ -289,6 +292,10 @@ executor_effort = "medium"
 handoff_mode = "auto"
 require_model_routing = true
 ```
+
+Codex TOML 表名若包含点号必须加引号，例如 `[presets."grok-4.6"]`。若当前 Codex
+没有原生 plan/todo 工具，应在 Handoff Packet 中放入严格的 Markdown 复选框完整任务
+列表；Stop 钩子会校验并持久化这份回退快照。
 
 预设只配置 executor。旧字段 `planner` / `planner_thinking` 被忽略并给出弃用警告；
 `executor_thinking` 作为 `executor_effort` 的弃用别名被接受。

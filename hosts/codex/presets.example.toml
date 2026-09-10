@@ -3,6 +3,8 @@
 # These model ids are native Codex catalog examples; confirm them against the
 # current CLI catalog. executor_effort is requested only when the live
 # spawn_agent schema exposes reasoning_effort.
+# Quote a preset table name when it contains periods, for example
+# [presets."grok-4.6"].
 #
 # fork_turns:
 #   "all" (default) — the executor inherits the planner's full trajectory

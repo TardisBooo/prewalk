@@ -33,6 +33,13 @@ Implement both native routes.
 Do not reconstruct this packet.
 """
 
+PACKET_TODO_SNAPSHOT = PACKET.replace(
+    "Three real tasks.",
+    """1. [x] Implement capture and test it
+2. [ ] Update the Codex adapter and verify it
+3. [ ] Update the Claude adapter and check it""",
+)
+
 
 def todos(*, first: str = "completed", remaining: int = 2) -> list[core.Todo]:
     items = [core.Todo("1", "Implement capture and test it", first)]
@@ -125,7 +132,19 @@ print(json.dumps({"status": result.status, "message": result.message, "packet": 
                 self.assertEqual(result.status, expected)
                 self.assertEqual(self.load().phase, core.V4_PLANNING)
 
-    def test_packet_without_todos_is_rejected_instead_of_treated_as_trivial(self) -> None:
+    def test_packet_checklist_recovers_todos_when_host_has_no_plan_tool(self) -> None:
+        result = core.capture_v4_checkpoint(
+            self.store, self.session_id, packet=PACKET_TODO_SNAPSHOT
+        )
+
+        self.assertEqual(result.status, "checkpoint_ready")
+        self.assertEqual([todo.id for todo in result.state.todos], ["1", "2", "3"])
+        self.assertEqual(
+            [todo.status for todo in result.state.todos],
+            ["completed", "pending", "pending"],
+        )
+
+    def test_malformed_packet_todo_section_still_fails_closed(self) -> None:
         result = core.capture_v4_checkpoint(
             self.store, self.session_id, packet=PACKET
         )

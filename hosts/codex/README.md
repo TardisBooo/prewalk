@@ -84,9 +84,11 @@ Prewalk never guesses identity from the newest rollout file.
 
 ## State
 
-State lives in `~/.codex/prewalk-state.json`, or under `CODEX_HOME`. The plugin
-uses locked atomic writes and quarantines malformed JSON with a `.corrupt`
-suffix.
+State lives in `~/.codex/prewalk-state.json`, or under `CODEX_HOME`.
+`PREWALK_STATE_FILE` may point to an absolute writable state file when a project
+sandbox cannot write to that directory. `pw-doctor` probes the same lock path
+used by the store. The plugin uses locked atomic writes and quarantines
+malformed JSON with a `.corrupt` suffix.
 
 ## Update
 

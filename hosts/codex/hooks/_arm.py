@@ -21,6 +21,7 @@ import os
 from pathlib import Path
 import re
 import shlex
+import shutil
 import subprocess
 import sys
 
@@ -95,12 +96,32 @@ def cmd_arm(session_id: str, rest: list[str]) -> int:
         )
     else:
         name = preset_name or core.default_preset_toml(presets_path)
-        preset = presets.get(name) or next(iter(presets.values()))
-        preset_name = preset.name
+        preset = presets.get(name)
+        if preset is None:
+            available = ", ".join(sorted(presets))
+            print(
+                f"prewalk: unknown preset {name!r}; available presets: {available}.",
+                file=sys.stderr,
+            )
+            return 2
 
-    core.start_v4_run(
-        _common.store_file(), session_id, os.getcwd(), "codex", preset, fast_mode=auto_swap
-    )
+    try:
+        core.start_v4_run(
+            _common.store_file(), session_id, os.getcwd(), "codex", preset, fast_mode=auto_swap
+        )
+    except OSError as exc:
+        print(
+            "prewalk: cannot arm because the durable state store is not writable: "
+            f"{_common.store_file()} ({exc}).",
+            file=sys.stderr,
+        )
+        print(
+            "Grant this command write access outside the workspace sandbox, or set "
+            "PREWALK_STATE_FILE to one absolute path inherited by Codex and all plugin hooks. "
+            "No Prewalk checkpoint was created.",
+            file=sys.stderr,
+        )
+        return 1
     print(f"prewalk ARMED  [{preset.name}]  auto_swap={auto_swap}")
     print("  planner : active root session (Prewalk does not change it)")
     print(f"  handoff : {preset.handoff_mode}  require_model_routing={preset.require_model_routing}")
@@ -116,15 +137,28 @@ def cmd_arm(session_id: str, rest: list[str]) -> int:
 MIN_CODEX_VERSION = (0, 146, 0)
 
 
+def _cli_executable(name: str) -> str:
+    """Resolve npm command shims on Windows without requiring a shell."""
+    candidates = (f"{name}.cmd", f"{name}.exe", name) if os.name == "nt" else (name,)
+    return next((path for item in candidates if (path := shutil.which(item))), name)
+
+
 def _codex_version() -> tuple[tuple[int, int, int] | None, str]:
     """Ask the ``codex`` binary for its version, tolerating any output shape."""
     try:
         result = subprocess.run(
-            ["codex", "--version"], text=True, capture_output=True, timeout=5, check=False
+            [_cli_executable("codex"), "--version"],
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            capture_output=True,
+            timeout=5,
+            check=False,
         )
     except (OSError, subprocess.SubprocessError):
         return None, "not found"
-    detail = (result.stdout or result.stderr).strip().splitlines()[-1]
+    lines = (result.stdout or result.stderr or "").strip().splitlines()
+    detail = lines[-1] if lines else f"exit {result.returncode} with no output"
     match = re.search(r"(\d+)\.(\d+)\.(\d+)", detail)
     return (tuple(map(int, match.groups())) if match else None), detail
 
@@ -149,8 +183,10 @@ def _codex_model_catalog() -> tuple[set[str] | None, str]:
     """Return the live model-id set, or None plus a human reason on failure."""
     try:
         result = subprocess.run(
-            ["codex", "debug", "models"],
+            [_cli_executable("codex"), "debug", "models"],
             text=True,
+            encoding="utf-8",
+            errors="replace",
             capture_output=True,
             timeout=10,
             check=False,
@@ -161,8 +197,8 @@ def _codex_model_catalog() -> tuple[set[str] | None, str]:
         detail = (result.stderr or result.stdout).strip().splitlines()
         return None, detail[-1] if detail else f"exit {result.returncode}"
     try:
-        model_ids = _codex_catalog_ids(json.loads(result.stdout))
-    except (json.JSONDecodeError, ValueError) as exc:
+        model_ids = _codex_catalog_ids(json.loads(result.stdout or ""))
+    except (json.JSONDecodeError, TypeError, ValueError) as exc:
         return None, f"invalid response ({exc})"
     return model_ids, f"{len(model_ids)} model(s) from codex debug models"
 
@@ -176,7 +212,7 @@ def cmd_doctor(given_session_id: str, rest: list[str]) -> int:
         failures += 0 if ok else 1
 
     check(sys.version_info >= (3, 10), "Python", sys.version.split()[0])
-    check(core.VERSION == "1.0.0", "shared core", core.VERSION)
+    check(core.VERSION == "1.0.1", "shared core", core.VERSION)
     version, version_text = _codex_version()
     check(
         version is not None and version >= MIN_CODEX_VERSION,
@@ -220,8 +256,8 @@ def cmd_doctor(given_session_id: str, rest: list[str]) -> int:
     except (OSError, json.JSONDecodeError, KeyError, TypeError):
         manifest_ok = False
     check(manifest_ok, "plugin hooks", str(manifest))
-    store_parent = Path(_common.store_file()).parent
-    check(store_parent.is_dir() and os.access(store_parent, os.W_OK), "state directory", str(store_parent))
+    store_ok, store_detail = _common.state_store_access()
+    check(store_ok, "state store", store_detail)
     preset = (
         presets.get(core.default_preset_toml(presets_path)) or next(iter(presets.values()))
         if presets else core.Preset("default", "gpt-5.6-terra")

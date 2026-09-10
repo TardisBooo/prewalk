@@ -1,5 +1,15 @@
 # Release checklist
 
+## v1.0.1
+
+- [x] Targeted regression tests cover state permissions, Windows CLI shims,
+  dotted preset names, packet todo fallback, and Codex patch detection.
+- [x] Isolated arm/checkpoint/route acceptance verifies the repaired workflow.
+- [x] Engine, manifest, marketplace, changelog, and migration-guide versions
+  agree on 1.0.1.
+- [x] Vendored engine copies are byte-identical to the canonical package.
+- [ ] Tag `v1.0.1` only after review.
+
 ## v1.0.0
 
 - [x] Shared unit, adapter, end-to-end, and workflow-matrix suites pass.

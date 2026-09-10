@@ -31,6 +31,13 @@ native routing
 do not reconstruct the packet
 """
 
+PACKET_WITH_CHECKLIST = PACKET.replace(
+    "three real tasks",
+    """1. [x] Implement core and test it
+2. [ ] Update adapters and verify them
+3. [ ] Update docs and check contracts""",
+)
+
 
 class EndToEndFlowTests(unittest.TestCase):
     """Drive every host hook script as a real subprocess, like the host would."""
@@ -202,6 +209,24 @@ class EndToEndFlowTests(unittest.TestCase):
         })
         status = self.run_script("codex", "_arm.py", "status", session_id)
         self.assertIn("idle", status.stdout)
+
+    def test_codex_stop_recovers_checklist_when_plan_tool_is_absent(self) -> None:
+        session_id = "codex-packet-todos"
+        self.run_script("codex", "_arm.py", "arm", session_id, "Build the feature")
+
+        stopped = self.run_script("codex", "pause_detect.py", payload={
+            "session_id": session_id,
+            "hook_event_name": "Stop",
+            "last_assistant_message": PACKET_WITH_CHECKLIST,
+        })
+
+        self.assertIn("checkpoint ready", stopped.stdout)
+        state = self.codex_state(session_id)
+        self.assertEqual(state["phase"], "checkpoint_ready")
+        self.assertEqual(
+            [item["status"] for item in state["todos"]],
+            ["completed", "pending", "pending"],
+        )
 
     def test_codex_failed_handoff_is_retryable(self) -> None:
         session_id = "codex-retry"

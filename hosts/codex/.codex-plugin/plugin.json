@@ -1,6 +1,6 @@
 {
   "name": "prewalk",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Prewalk for Codex: a frontier model explores + plans + lands the first verified edit, then hands off to a cheaper executor subagent.",
   "author": {
     "name": "TardisBooo",
@@ -17,6 +17,11 @@
     "longDescription": "Prewalk: a high-capability model explores the repository, plans a capped todo list, and lands the first verified edit, then hands off — a structured packet or the full trajectory — to a configured executor that finishes the rest.",
     "developerName": "TardisBooo",
     "category": "Developer Tools",
-    "capabilities": ["Interactive", "Write"]
+    "capabilities": ["Interactive", "Write"],
+    "defaultPrompt": [
+      "Use Prewalk to explore this repository, plan the work, complete the first verified task, and hand off the remainder to a configured executor.",
+      "Diagnose my Prewalk installation and confirm that durable state and native executor routing are available.",
+      "Show the current Prewalk phase and the safest next action."
+    ]
   }
 }

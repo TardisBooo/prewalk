@@ -76,8 +76,10 @@ text inside shell quotes or comments.
 ## State
 
 State lives in `~/.claude/prewalk-state.json`, or under `CLAUDE_CONFIG_DIR`.
-The plugin uses locked atomic writes and quarantines malformed JSON with a
-`.corrupt` suffix.
+`PREWALK_STATE_FILE` may point to an absolute writable state file when a project
+sandbox cannot write to that directory. `pw-doctor` probes the same lock path
+used by the store. The plugin uses locked atomic writes and quarantines
+malformed JSON with a `.corrupt` suffix.
 
 ## Update
 

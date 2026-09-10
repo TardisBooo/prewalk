@@ -22,6 +22,7 @@ import os
 from pathlib import Path
 import re
 import shlex
+import shutil
 import subprocess
 import sys
 
@@ -97,17 +98,36 @@ def cmd_arm(session_id: str, rest: list[str]) -> int:
         )
     else:
         name = preset_name or core.default_preset_json(presets_path)
-        preset = presets.get(name) or next(iter(presets.values()))
-        preset_name = preset.name
+        preset = presets.get(name)
+        if preset is None:
+            available = ", ".join(sorted(presets))
+            print(
+                f"prewalk: unknown preset {name!r}; available presets: {available}.",
+                file=sys.stderr,
+            )
+            return 2
 
     report = core.evaluate_capabilities(preset, "claude", environment=dict(os.environ))
     if not report.routing_allowed:
         print("prewalk: cannot arm because required executor routing is not provable.", file=sys.stderr)
         print(core.format_capability_report(report), file=sys.stderr)
         return 1
-    core.start_v4_run(
-        _common.store_file(), session_id, os.getcwd(), "claude", preset, fast_mode=auto_swap
-    )
+    try:
+        core.start_v4_run(
+            _common.store_file(), session_id, os.getcwd(), "claude", preset, fast_mode=auto_swap
+        )
+    except OSError as exc:
+        print(
+            "prewalk: cannot arm because the durable state store is not writable: "
+            f"{_common.store_file()} ({exc}).",
+            file=sys.stderr,
+        )
+        print(
+            "Grant write access, or set PREWALK_STATE_FILE to one absolute path inherited "
+            "by Claude Code and all plugin hooks. No Prewalk checkpoint was created.",
+            file=sys.stderr,
+        )
+        return 1
     print(f"prewalk ARMED  [{preset.name}]  auto_swap={auto_swap}")
     print("  planner : active root session (Prewalk does not change it)")
     print(f"  handoff : {preset.handoff_mode} (model routing required={preset.require_model_routing})")
@@ -123,15 +143,28 @@ def cmd_arm(session_id: str, rest: list[str]) -> int:
 MIN_CLAUDE_VERSION = (2, 1, 145)
 
 
+def _cli_executable(name: str) -> str:
+    """Resolve npm command shims on Windows without requiring a shell."""
+    candidates = (f"{name}.cmd", f"{name}.exe", name) if os.name == "nt" else (name,)
+    return next((path for item in candidates if (path := shutil.which(item))), name)
+
+
 def _claude_version() -> tuple[tuple[int, int, int] | None, str]:
     """Ask the ``claude`` binary for its version, tolerating any output shape."""
     try:
         result = subprocess.run(
-            ["claude", "--version"], text=True, capture_output=True, timeout=5, check=False
+            [_cli_executable("claude"), "--version"],
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            capture_output=True,
+            timeout=5,
+            check=False,
         )
     except (OSError, subprocess.SubprocessError):
         return None, "not found"
-    detail = (result.stdout or result.stderr).strip().splitlines()[-1]
+    lines = (result.stdout or result.stderr or "").strip().splitlines()
+    detail = lines[-1] if lines else f"exit {result.returncode} with no output"
     match = re.search(r"(\d+)\.(\d+)\.(\d+)", detail)
     return (tuple(map(int, match.groups())) if match else None), detail
 
@@ -145,7 +178,7 @@ def cmd_doctor(given_session_id: str) -> int:
         failures += 0 if ok else 1
 
     check(sys.version_info >= (3, 10), "Python", sys.version.split()[0])
-    check(core.VERSION == "1.0.0", "shared core", core.VERSION)
+    check(core.VERSION == "1.0.1", "shared core", core.VERSION)
     version, version_text = _claude_version()
     check(
         version is not None and version >= MIN_CLAUDE_VERSION,
@@ -187,8 +220,8 @@ def cmd_doctor(given_session_id: str) -> int:
     except (OSError, json.JSONDecodeError, KeyError, TypeError):
         manifest_ok = False
     check(manifest_ok, "plugin hooks", str(manifest))
-    store_parent = Path(_common.store_file()).parent
-    check(store_parent.is_dir() and os.access(store_parent, os.W_OK), "state directory", str(store_parent))
+    store_ok, store_detail = _common.state_store_access()
+    check(store_ok, "state store", store_detail)
     preset = (
         presets.get(core.default_preset_json(presets_path)) or next(iter(presets.values()))
         if presets else core.Preset("default", "haiku")

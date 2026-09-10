@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.0.1
+
+- Make the state-file location explicitly configurable with
+  `PREWALK_STATE_FILE`, probe the real lock path in `pw-doctor`, and turn state
+  permission failures into actionable arm errors instead of tracebacks.
+- Resolve Windows npm command shims such as `codex.cmd` during capability
+  checks, and reject unknown preset names instead of silently selecting the
+  first preset.
+- Accept quoted and bare dotted TOML preset names such as `grok-4.6`.
+- Capture a strict checkbox todo snapshot from the Handoff Packet when the host
+  has no native plan/todo tool, and recognize patches issued through Codex's
+  current `tools.apply_patch` orchestration surface.
+
 ## 1.0.0
 
 Initial release of the dual-host prewalk plugin: one host-agnostic engine

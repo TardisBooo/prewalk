@@ -55,6 +55,39 @@ def _packet_section(packet: str, heading: str) -> str:
     return match.group(1).strip() if match else ""
 
 
+_PACKET_TODO_RE = re.compile(
+    r"^\s*(?:(\d+)[.)]|[-*+])\s+\[([ xX])\]\s+(.+?)\s*$"
+)
+
+
+def packet_todos(packet: str) -> list[Todo]:
+    """Parse a strict Markdown checklist from the packet's todo section.
+
+    Newer Codex surfaces do not always expose a dedicated plan/todo tool to
+    hooks. In that case the exact Stop packet is the only durable todo
+    snapshot available. Accept only a section made entirely of numbered or
+    bulleted Markdown checkboxes; any prose or malformed line fails closed.
+    The normal todo validator still enforces IDs, verification criteria,
+    statuses, caps, and the completed-first-task invariant.
+    """
+    section = _packet_section(packet, "Full Todo List")
+    lines = [line for line in section.splitlines() if line.strip()]
+    if not lines:
+        return []
+    todos: list[Todo] = []
+    for index, line in enumerate(lines, 1):
+        match = _PACKET_TODO_RE.match(line)
+        if not match:
+            return []
+        item_id, checked, content = match.groups()
+        todos.append(Todo(
+            id=item_id or str(index),
+            content=content,
+            status="completed" if checked.lower() == "x" else "pending",
+        ))
+    return todos
+
+
 # Phrases in the verification section that mean "I could not verify" — the
 # packet then records an explicit warning instead of fabricated evidence.
 _VERIFICATION_WARNING_RE = re.compile(
@@ -145,6 +178,8 @@ def capture_v4_checkpoint(
         )
 
     snapshot = list(todos) if todos else list(state.todos)
+    if not snapshot:
+        snapshot = packet_todos(packet)
     if not snapshot:
         # No plan exists. If the message *looks* like a packet, the planner
         # skipped the todo protocol — reject; otherwise the task was trivial

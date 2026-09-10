@@ -1,5 +1,13 @@
 # Migrating from Prewalk 0.3.x to 1.0.0
 
+## Upgrading from 1.0.0 to 1.0.1
+
+Prewalk 1.0.1 keeps the v4 state schema unchanged. Restart the host after
+updating. Existing valid 1.0.0 checkpoints remain readable. If the host sandbox
+cannot write under `CODEX_HOME` or `CLAUDE_CONFIG_DIR`, grant that state path
+write access or set `PREWALK_STATE_FILE` to an absolute writable file before
+starting the host.
+
 Prewalk 1.0.0 replaces the simulated model-switch workflow with host-native
 executor orchestration. Upgrade the plugin, restart the host, and begin a new
 Prewalk run. Do not reuse an in-flight 0.3.x handoff.
