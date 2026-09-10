@@ -1,0 +1,20 @@
+{
+  "_comment": "Copy to ~/.claude/prewalk-presets.json. The active Claude session is the planner; presets configure only the executor. Claude aliases below are native catalog examples. Dynamic per-subagent effort is not currently supported.",
+  "default": "code-value",
+  "presets": {
+    "code-value": {
+      "description": "Balanced native Claude executor",
+      "executor": "sonnet",
+      "handoff_mode": "spawn",
+      "require_model_routing": true,
+      "max_todos": 12
+    },
+    "budget": {
+      "description": "Lower-cost native Claude executor",
+      "executor": "haiku",
+      "handoff_mode": "spawn",
+      "require_model_routing": true,
+      "max_todos": 10
+    }
+  }
+}

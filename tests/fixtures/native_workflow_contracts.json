@@ -1,0 +1,132 @@
+{
+  "schema_version": 1,
+  "hosts": {
+    "codex": {
+      "minimum_version": "0.146.0",
+      "source": {
+        "kind": "generated",
+        "generator": "Codex CLI 0.146.0 runtime hook and collaboration.spawn_agent schemas"
+      },
+      "spawn_agent": {
+        "required": ["task_name", "message", "fork_turns", "model"],
+        "optional": ["reasoning_effort"],
+        "example": {
+          "task_name": "prewalk_executor_deadbeef",
+          "message": "PREWALK_HANDOFF_TOKEN: fixture-token",
+          "fork_turns": "all",
+          "model": "gpt-5.6-terra",
+          "reasoning_effort": "medium"
+        }
+      },
+      "events": {
+        "PreToolUse": {
+          "required": ["session_id", "hook_event_name", "tool_name", "tool_use_id", "tool_input"],
+          "example": {
+            "session_id": "codex-root-fixture",
+            "hook_event_name": "PreToolUse",
+            "tool_name": "collaboration.spawn_agent",
+            "tool_use_id": "tool-route",
+            "tool_input": {"task_name": "prewalk_executor_deadbeef", "message": "PREWALK_HANDOFF_TOKEN: fixture-token", "fork_turns": "all", "model": "gpt-5.6-terra"}
+          }
+        },
+        "PostToolUse": {
+          "required": ["session_id", "hook_event_name", "tool_name", "tool_use_id", "tool_response"],
+          "example": {
+            "session_id": "codex-root-fixture",
+            "hook_event_name": "PostToolUse",
+            "tool_name": "collaboration.spawn_agent",
+            "tool_use_id": "tool-route",
+            "tool_response": {"agent_id": "agent-route"}
+          }
+        },
+        "SubagentStop": {
+          "required": ["session_id", "hook_event_name", "agent_id", "last_assistant_message"],
+          "example": {
+            "session_id": "codex-root-fixture",
+            "hook_event_name": "SubagentStop",
+            "agent_id": "agent-route",
+            "last_assistant_message": "PREWALK_COMPLETE"
+          }
+        }
+      }
+    },
+    "claude": {
+      "minimum_version": "2.1.145",
+      "source": {
+        "kind": "documented",
+        "url": "https://code.claude.com/docs/en/hooks",
+        "snapshot": "2026-08-20"
+      },
+      "events": {
+        "PreToolUse": {
+          "required": ["session_id", "hook_event_name", "tool_use_id", "tool_input"],
+          "example": {
+            "session_id": "claude-root-fixture",
+            "hook_event_name": "PreToolUse",
+            "tool_use_id": "tool-route",
+            "tool_input": {"prompt": "PREWALK_HANDOFF_TOKEN: fixture-token", "run_in_background": true}
+          }
+        },
+        "PostToolUse": {
+          "required": ["session_id", "hook_event_name", "tool_use_id", "tool_response"],
+          "example": {
+            "session_id": "claude-root-fixture",
+            "hook_event_name": "PostToolUse",
+            "tool_use_id": "tool-route",
+            "tool_response": {"success": true}
+          }
+        },
+        "PostToolUseFailure": {
+          "required": ["session_id", "hook_event_name", "tool_use_id", "error"],
+          "example": {
+            "session_id": "claude-root-fixture",
+            "hook_event_name": "PostToolUseFailure",
+            "tool_use_id": "tool-route",
+            "error": "model unavailable"
+          }
+        },
+        "PermissionDenied": {
+          "required": ["session_id", "hook_event_name", "tool_use_id", "reason"],
+          "example": {
+            "session_id": "claude-root-fixture",
+            "hook_event_name": "PermissionDenied",
+            "tool_use_id": "tool-route",
+            "reason": "permission denied"
+          }
+        },
+        "SubagentStart": {
+          "required": ["session_id", "hook_event_name", "agent_id", "agent_type"],
+          "example": {
+            "session_id": "claude-root-fixture",
+            "hook_event_name": "SubagentStart",
+            "agent_id": "agent-route",
+            "agent_type": "prewalk-executor"
+          }
+        },
+        "SubagentStop": {
+          "required": ["session_id", "hook_event_name", "agent_id", "agent_type", "last_assistant_message"],
+          "example": {
+            "session_id": "claude-root-fixture",
+            "hook_event_name": "SubagentStop",
+            "agent_id": "agent-route",
+            "agent_type": "prewalk-executor",
+            "last_assistant_message": "PREWALK_COMPLETE"
+          }
+        }
+      }
+    }
+  },
+  "matrix": {
+    "operating_systems": ["ubuntu-latest", "macos-latest"],
+    "version_tracks": ["minimum", "latest"],
+    "scenarios": {
+      "foreground_and_background": ["test_end_to_end.EndToEndFlowTests.test_claude_foreground_lifecycle_completes_before_agent_posttooluse", "test_v4_claude_route.V4ClaudeRouteTests.test_rewrite_uses_durable_packet_and_preserves_valid_fields"],
+      "concurrent_and_foreign_events": ["test_end_to_end.EndToEndFlowTests.test_codex_interleaved_threads_remain_isolated", "test_v4_claude_route.V4ClaudeRouteTests.test_unrelated_nested_and_parallel_calls_cannot_consume_route"],
+      "compaction_resume_durable_and_v3_reset": ["test_v4_state.V4StateTests.test_checkpoint_survives_a_fresh_process_without_transcript_input", "test_v4_state.V4StateTests.test_v3_record_is_reset_without_touching_another_session"],
+      "routing_and_permission_failures": ["test_v4_codex_route.V4CodexRouteTests.test_live_schema_must_prove_required_model_without_consuming_checkpoint", "test_v4_config.V4ConfigTests.test_codex_capabilities_change_only_with_the_live_schema", "test_v4_config.V4ConfigTests.test_claude_conflicting_subagent_override_fails_closed_when_required", "test_v4_claude_route.V4ClaudeRouteTests.test_permission_failure_and_incomplete_marker_retain_checkpoint"],
+      "launch_interrupt_marker_and_stale": ["test_v4_codex_route.V4CodexRouteTests.test_spawn_failure_missing_marker_and_interruption_are_incomplete", "test_v4_operations.V4OperationTests.test_stale_detection_never_clears_or_unbinds_unknown_executor", "test_v4_operations.V4OperationTests.test_reconcile_requires_explicit_liveness_confirmation_and_is_idempotent"],
+      "trivial_one_remaining_normal_and_fast": ["test_v4_checkpoint.V4CheckpointTests.test_zero_or_one_remaining_stays_in_the_root_session", "test_end_to_end.EndToEndFlowTests.test_codex_scripts_complete_a_full_handoff", "test_end_to_end.EndToEndFlowTests.test_claude_fast_mode_requests_handoff_from_stop_hook"],
+      "plugin_install_upgrade_and_core_equivalence": ["test_contracts.NativeContractTests.test_repository_contracts", "test_prewalk_core.PrewalkEngineLegacyTests.test_vendored_engine_copies_match_canonical_package"]
+    }
+  }
+}

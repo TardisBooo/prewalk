@@ -1,0 +1,57 @@
+name: check
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        python: ["3.11", "3.12", "3.13", "3.14"]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - run: ./scripts/check.sh
+        env:
+          PREWALK_SKIP_NATIVE_CLIS: "1"
+
+  native-contract:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        cli:
+          - name: claude
+            package: "@anthropic-ai/claude-code"
+            version: "2.1.145"
+          - name: claude
+            package: "@anthropic-ai/claude-code"
+            version: "latest"
+          - name: codex
+            package: "@openai/codex"
+            version: "0.146.0"
+          - name: codex
+            package: "@openai/codex"
+            version: "latest"
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: npm install --global "${{ matrix.cli.package }}@${{ matrix.cli.version }}"
+      - run: ./scripts/check_native_clis.sh "${{ matrix.cli.name }}"
+        env:
+          PREWALK_REQUIRE_NATIVE_CLIS: "1"

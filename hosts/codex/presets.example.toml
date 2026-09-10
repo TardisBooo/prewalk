@@ -1,0 +1,41 @@
+# Copy to $CODEX_HOME/prewalk-presets.toml (~/.codex/prewalk-presets.toml).
+# The active Codex thread is the planner. Presets configure only the executor.
+# These model ids are native Codex catalog examples; confirm them against the
+# current CLI catalog. executor_effort is requested only when the live
+# spawn_agent schema exposes reasoning_effort.
+#
+# fork_turns:
+#   "all" (default) — the executor inherits the planner's full trajectory
+#           (reads, dead ends, task-1 edits). Cheapest and highest fidelity to
+#           the technique; the route message is a short phase-2 note.
+#   "none"          — fresh-context executor that receives only the handoff
+#           packet. Keeps the executor context minimal; it must re-read files.
+
+default_preset = "code-value"
+
+[presets.code-value]
+description = "Balanced native Codex executor, trajectory handoff"
+executor = "gpt-5.6-terra"
+executor_effort = "medium"
+max_todos = 12
+handoff_mode = "auto"
+require_model_routing = true
+fork_turns = "all"
+
+[presets.code-max]
+description = "Higher-capable native Codex executor"
+executor = "gpt-5.6-sol"
+executor_effort = "high"
+max_todos = 12
+handoff_mode = "auto"
+require_model_routing = true
+fork_turns = "all"
+
+[presets.packet-minimal]
+description = "Fresh-context executor with packet only (0.4.0 behaviour)"
+executor = "gpt-5.6-terra"
+executor_effort = "medium"
+max_todos = 12
+handoff_mode = "auto"
+require_model_routing = true
+fork_turns = "none"

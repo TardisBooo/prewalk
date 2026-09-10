@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "_comment": "LOOSE-INSTALL fallback. The recommended way to install is as a plugin: `claude plugin marketplace add <repo> && claude plugin install prewalk@prewalk` — hooks register automatically via hooks/hooks.json and ${CLAUDE_PLUGIN_ROOT} is set for you. Only use the block below if you wire the hooks manually (not as a plugin). Replace <PREWALK_ROOT> with the absolute path to this hosts/claude/ directory.",
+
+  "hooks": {
+    "Stop": [
+      { "hooks": [ { "type": "command",
+        "command": "python3 \"<PREWALK_ROOT>/hooks/pause_detect.py\"" } ] }
+    ],
+    "SessionStart": [
+      { "hooks": [ { "type": "command",
+        "command": "python3 \"<PREWALK_ROOT>/hooks/export_session_id.py\"" } ] }
+    ],
+    "PostToolUse": [
+      { "matcher": "TodoWrite|TaskCreate|TaskUpdate|TaskList",
+        "hooks": [ { "type": "command",
+          "command": "python3 \"<PREWALK_ROOT>/hooks/todo_tracker.py\"" } ] },
+      { "matcher": "Write|Edit|MultiEdit|Bash|rp|RepoPrompt",
+        "hooks": [ { "type": "command",
+          "command": "python3 \"<PREWALK_ROOT>/hooks/edit_tracker.py\"" } ] },
+      { "matcher": "Task|Agent",
+        "hooks": [ { "type": "command",
+          "command": "python3 \"<PREWALK_ROOT>/hooks/handoff_result.py\"" } ] }
+    ],
+    "SubagentStart": [
+      { "matcher": "^(prewalk:)?prewalk-executor$",
+        "hooks": [ { "type": "command",
+          "command": "python3 \"<PREWALK_ROOT>/hooks/handoff_lifecycle.py\"" } ] }
+    ],
+    "SubagentStop": [
+      { "matcher": "^(prewalk:)?prewalk-executor$",
+        "hooks": [ { "type": "command",
+          "command": "python3 \"<PREWALK_ROOT>/hooks/handoff_lifecycle.py\"" } ] }
+    ],
+    "PostToolUseFailure": [
+      { "matcher": "Task|Agent",
+        "hooks": [ { "type": "command",
+          "command": "python3 \"<PREWALK_ROOT>/hooks/handoff_result.py\"" } ] }
+    ],
+    "PermissionDenied": [
+      { "matcher": "Task|Agent",
+        "hooks": [ { "type": "command",
+          "command": "python3 \"<PREWALK_ROOT>/hooks/handoff_result.py\"" } ] }
+    ],
+    "PreToolUse": [
+      { "matcher": "Task|Agent",
+        "hooks": [ { "type": "command",
+          "command": "python3 \"<PREWALK_ROOT>/hooks/handoff_router.py\"" } ] }
+    ]
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "name": "prewalk-marketplace",
+  "interface": {
+    "displayName": "Prewalk"
+  },
+  "plugins": [
+    {
+      "name": "prewalk",
+      "version": "1.0.0",
+      "source": {
+        "source": "local",
+        "path": "./hosts/codex"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_USE"
+      },
+      "category": "Developer Tools"
+    }
+  ]
+}

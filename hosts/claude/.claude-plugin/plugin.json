@@ -1,0 +1,14 @@
+{
+  "$schema": "https://anthropic.com/claude-code/plugin.schema.json",
+  "name": "prewalk",
+  "description": "Frontier model explores + plans + lands the first verified edit, then hands off to a cheaper executor subagent.",
+  "version": "1.0.0",
+  "author": {
+    "name": "TardisBooo",
+    "url": "https://github.com/TardisBooo/prewalk"
+  },
+  "homepage": "https://github.com/TardisBooo/prewalk",
+  "repository": "https://github.com/TardisBooo/prewalk",
+  "license": "MIT",
+  "keywords": ["prewalk", "model-routing", "cost", "planner", "executor"]
+}

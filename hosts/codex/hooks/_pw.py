@@ -1,0 +1,126 @@
+#!/usr/bin/env python3
+"""Skill-side helper for the Codex host: handoff and revision commands.
+
+Invoked by the ``$pw-go`` / ``$pw-revise`` / ``$pw-retry`` /
+``$pw-reconcile`` / ``$pw-resume`` / ``$pw-off`` skills:
+
+  _pw.py go        <session_id> [--schema-fields=...]
+  _pw.py revise    <session_id> [revision text...]
+  _pw.py retry     <session_id> --schema-fields=...
+  _pw.py reconcile <session_id> [--confirmed-not-running] [detail...]
+  _pw.py resume    <session_id>
+  _pw.py complete|incomplete <session_id> [detail...]
+
+On success ``go``/``retry`` print the route in the machine-readable envelope
+(``PREWALK_*`` markers) that skills relay verbatim to the model.
+"""
+
+from __future__ import annotations
+
+import sys
+
+import _engine  # noqa: F401  (locates prewalk_engine)
+import _common  # type: ignore[import-not-found]  # noqa: E402
+import prewalk_engine as core  # noqa: E402
+
+
+def _schema_fields(arguments: list[str]) -> set[str]:
+    """Collect ``--schema-fields=a,b`` values so routing proof is per-run live."""
+    fields: set[str] = set()
+    for argument in arguments:
+        if argument.startswith("--schema-fields="):
+            fields.update(
+                item.strip() for item in argument.partition("=")[2].split(",") if item.strip()
+            )
+    return fields
+
+
+def _print_route(result: core.V4CheckpointResult) -> None:
+    """Emit the route envelope, or the plain message when nothing is live."""
+    if result.state is not None and result.status == "handoff_requested":
+        state = result.state
+        print(f"PREWALK_TASK_NAME: {state.route_task_name}")
+        print(f"PREWALK_EXECUTOR_MODEL: {state.executor_model}")
+        if state.effort_routing_proven:
+            print(f"PREWALK_EXECUTOR_EFFORT: {state.executor_effort}")
+        print(f"PREWALK_FORK_TURNS: {state.fork_turns}")
+        print("PREWALK_MESSAGE_BEGIN")
+        print(result.message)
+        print("PREWALK_MESSAGE_END")
+    else:
+        print(result.message or "There is no active prewalk checkpoint in this session.")
+
+
+def main() -> int:
+    if len(sys.argv) < 3:
+        print(__doc__, file=sys.stderr)
+        return 2
+    sub = sys.argv[1]
+    session_id = _common.resolve_session_id(sys.argv[2])
+    if not session_id:
+        print(
+            "prewalk: cannot continue — CODEX_THREAD_ID is missing or conflicts with the supplied id. "
+            "Use Codex CLI 0.146.0 or newer, or pass an explicit id on a legacy CLI.",
+            file=sys.stderr,
+        )
+        return 1
+    store = _common.store_file()
+
+    if sub == "go":
+        result = core.request_codex_handoff(
+            store, session_id, schema_fields=_schema_fields(sys.argv[3:])
+        )
+        _print_route(result)
+        return 0
+
+    if sub == "retry":
+        prepared = core.prepare_v4_retry(store, session_id)
+        if prepared.status in ("checkpoint_ready", "handoff_requested"):
+            prepared = core.request_codex_handoff(
+                store, session_id, schema_fields=_schema_fields(sys.argv[3:])
+            )
+        _print_route(prepared)
+        return 0
+
+    if sub == "reconcile":
+        confirmed = "--confirmed-not-running" in sys.argv[3:]
+        detail = " ".join(
+            argument for argument in sys.argv[3:]
+            if argument != "--confirmed-not-running"
+        )
+        result = core.reconcile_v4_route(
+            store,
+            session_id,
+            confirmed_not_running=confirmed,
+            detail=detail,
+        )
+        print(result.message)
+        return 0
+
+    if sub == "revise":
+        revision = " ".join(sys.argv[3:]).strip()
+        result = core.revise_v4_checkpoint(store, session_id, revision)
+        print(result.message or "There is no active prewalk checkpoint to revise.")
+        return 0
+
+    if sub == "resume":
+        result = core.resume_codex_manual(store, session_id)
+        print(result.message)
+        return 0
+
+    if sub in ("complete", "incomplete"):
+        result = core.finish_codex_manual(
+            store,
+            session_id,
+            complete=sub == "complete",
+            detail=" ".join(sys.argv[3:]),
+        )
+        print(result.message)
+        return 0
+
+    print("unknown subcommand: " + sub, file=sys.stderr)
+    return 2
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

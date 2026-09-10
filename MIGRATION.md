@@ -1,0 +1,69 @@
+# Migrating from Prewalk 0.3.x to 1.0.0
+
+Prewalk 1.0.0 replaces the simulated model-switch workflow with host-native
+executor orchestration. Upgrade the plugin, restart the host, and begin a new
+Prewalk run. Do not reuse an in-flight 0.3.x handoff.
+
+## Upgrade
+
+Codex:
+
+```sh
+codex plugin marketplace upgrade prewalk-marketplace
+codex plugin add prewalk@prewalk-marketplace
+```
+
+Claude Code:
+
+```sh
+claude plugin marketplace update prewalk
+claude plugin update prewalk@prewalk
+```
+
+Use only the namespaced skills shown in the main README. The active root
+session remains the planner for the entire planning phase; Prewalk does not
+select, replace, or restore its model.
+
+## Presets
+
+Remove `planner` and `planner_thinking` from custom preset files. They are
+accepted temporarily so `pw-doctor` can report a deprecation warning, but they
+are ignored. Keep `executor`, `max_todos`, `handoff_mode`, and
+`require_model_routing`.
+
+Rename `executor_thinking` to `executor_effort`. Codex requests it only when the
+live native `spawn_agent` schema exposes `reasoning_effort`. Claude Code does
+not currently expose a supported per-subagent effort control, so Prewalk reports
+the configured request as unsupported instead of claiming it was applied.
+
+## Checkpoints and todos
+
+Remove the synthetic `PAUSE` checkpoint todo from custom instructions. A v4
+todo snapshot contains real work only. The planner completes and verifies task 1,
+then its root `Stop` event persists the exact structured handoff packet. Zero or
+one remaining real task stays in the root session; two or more may be routed to
+one executor after review or through `--fast`.
+
+On Codex the default route is `fork_turns: "all"`: the executor inherits the
+planner's turn history and receives a short phase-2 note instead of a re-read
+packet. Set `fork_turns: "none"` in a preset to keep the older fresh-context
+packet handoff.
+
+## State reset
+
+The v4 durable state schema is intentionally incompatible with v3. On first
+load, a v3 record for the current session is reset and Prewalk asks for a new
+run; records belonging to other sessions are left untouched. The reset prevents
+an old ambiguous handoff from being mistaken for a live native executor.
+
+After upgrading, run the host-specific doctor before arming:
+
+```text
+$prewalk:pw-doctor
+/prewalk:pw-doctor
+```
+
+If a v4 route later becomes `incomplete`, use the namespaced retry command. If
+it becomes `stale`, first prove the recorded agent is no longer running, then
+use the namespaced reconcile command. Disarming clears Prewalk state only; it
+does not stop an executor.

@@ -1,0 +1,76 @@
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "./scripts/prewalk_pause.sh",
+            "timeout": 30
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "^((functions|collaboration)\\.)?spawn_agent$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "./scripts/prewalk_executor_router.sh",
+            "timeout": 30,
+            "statusMessage": "prewalk executor route check"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "^(functions\\.)?(update_plan|todo)$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "./scripts/prewalk_todo_tracker.sh",
+            "timeout": 30,
+            "statusMessage": "prewalk todo tracker"
+          }
+        ]
+      },
+      {
+        "matcher": "^(functions\\.)?(apply_patch|Edit|Write|exec_command|exec|Bash|rp|RepoPrompt)$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "./scripts/prewalk_edit_tracker.sh",
+            "timeout": 30,
+            "statusMessage": "prewalk edit tracker"
+          }
+        ]
+      },
+      {
+        "matcher": "^((functions|collaboration)\\.)?spawn_agent$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "./scripts/prewalk_executor_router.sh",
+            "timeout": 30,
+            "statusMessage": "prewalk executor binding"
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "./scripts/prewalk_executor_router.sh",
+            "timeout": 30,
+            "statusMessage": "prewalk executor completion"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "name": "prewalk",
+  "version": "1.0.0",
+  "description": "Prewalk for Codex: a frontier model explores + plans + lands the first verified edit, then hands off to a cheaper executor subagent.",
+  "author": {
+    "name": "TardisBooo",
+    "url": "https://github.com/TardisBooo/prewalk"
+  },
+  "homepage": "https://github.com/TardisBooo/prewalk",
+  "repository": "https://github.com/TardisBooo/prewalk",
+  "license": "MIT",
+  "keywords": ["prewalk", "cost", "planner", "executor", "model-routing", "fork-handoff"],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Prewalk",
+    "shortDescription": "Frontier explores + plans + first edit, then cheap executor finishes",
+    "longDescription": "Prewalk: a high-capability model explores the repository, plans a capped todo list, and lands the first verified edit, then hands off — a structured packet or the full trajectory — to a configured executor that finishes the rest.",
+    "developerName": "TardisBooo",
+    "category": "Developer Tools",
+    "capabilities": ["Interactive", "Write"]
+  }
+}

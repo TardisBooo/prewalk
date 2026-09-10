@@ -1,0 +1,23 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "prewalk",
+  "owner": {
+    "name": "TardisBooo"
+  },
+  "metadata": {
+    "description": "Prewalk for Claude Code — frontier explores + plans + lands the first edit, then hands off to a cheaper executor subagent"
+  },
+  "plugins": [
+    {
+      "name": "prewalk",
+      "description": "Frontier model explores, plans, and lands the first verified edit, then hands a token-bound handoff to a configured executor agent.",
+      "version": "1.0.0",
+      "author": {
+        "name": "TardisBooo"
+      },
+      "source": "./hosts/claude",
+      "category": "workflow",
+      "tags": ["prewalk", "model-routing", "cost", "planner", "executor"]
+    }
+  ]
+}
