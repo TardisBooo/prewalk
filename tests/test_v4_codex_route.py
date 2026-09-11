@@ -74,7 +74,7 @@ class V4CodexRouteTests(unittest.TestCase):
         return {
             "task_name": state.route_task_name,
             "message": core.codex_route_message(state),
-            "fork_turns": "all",
+            "fork_turns": "none",
             "model": state.executor_model,
             "reasoning_effort": state.executor_effort,
         }
@@ -160,7 +160,7 @@ class V4CodexRouteTests(unittest.TestCase):
     def test_malformed_intended_spawn_is_denied_and_becomes_retryable(self) -> None:
         state = self.request().state
         malformed = self.exact_input(state)
-        malformed["fork_turns"] = "none"
+        malformed["fork_turns"] = "all"
 
         decision = core.validate_codex_spawn(
             self.store, self.session_id, malformed, tool_use_id="tool-bad"
@@ -172,6 +172,13 @@ class V4CodexRouteTests(unittest.TestCase):
         loaded = core.load_v4_state(self.store, self.session_id)
         self.assertEqual(loaded.status, "incomplete")
         self.assertEqual(loaded.next_command, "pw-retry")
+
+    def test_legacy_profile_uses_fresh_context_for_pinned_model(self) -> None:
+        state = self.request().state
+        accepted = core.validate_codex_spawn(
+            self.store, self.session_id, self.exact_input(state), tool_use_id="tool-legacy-fresh"
+        )
+        self.assertTrue(accepted.allowed)
 
     def test_unrelated_spawn_and_agent_cannot_bind_or_complete(self) -> None:
         state = self.request().state

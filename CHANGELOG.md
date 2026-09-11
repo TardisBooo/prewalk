@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.8
+
+- Route pinned executors with fresh context on both legacy `fork_turns` and
+  current `fork_context` Codex schemas, avoiding the runtime's model-override
+  conflict while preserving the complete durable packet.
+
 ## 1.0.7
 
 - Route current Codex `fork_context` spawns with fresh context when pinning an

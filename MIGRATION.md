@@ -1,5 +1,11 @@
 # Migrating from Prewalk 0.3.x to 1.0.0
 
+## Upgrading from 1.0.7 to 1.0.8
+
+Prewalk 1.0.8 maps model-pinned routes to fresh-context spawns on both Codex
+schema variants. No checkpoint migration is required; the durable packet
+already contains the executor context.
+
 ## Upgrading from 1.0.6 to 1.0.7
 
 Prewalk 1.0.7 maps current Codex model-pinned routes to

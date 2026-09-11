@@ -608,8 +608,13 @@ def validate_codex_spawn(
     else:
         if str(tool_input.get("task_name") or "") != state.route_task_name:
             errors.append("task_name does not match the pending Prewalk route")
-        if tool_input.get("fork_turns") != state.fork_turns:
-            errors.append(f'fork_turns must be "{state.fork_turns}"')
+        # Codex also rejects model/reasoning overrides with a full-history
+        # legacy fork. Keep the durable preset unchanged, but route a pinned
+        # executor with a fresh context because the complete packet is in the
+        # message.
+        expected_fork_turns = "none" if state.model_routing_proven else state.fork_turns
+        if tool_input.get("fork_turns") != expected_fork_turns:
+            errors.append(f'fork_turns must be "{expected_fork_turns}"')
     if state.model_routing_proven and tool_input.get("model") != state.executor_model:
         errors.append("model does not match the configured executor")
     if state.require_model_routing and not state.model_routing_proven:

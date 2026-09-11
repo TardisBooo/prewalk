@@ -46,7 +46,8 @@ def _print_route(result: core.V4CheckpointResult, schema_fields: set[str]) -> No
         else:
             print("PREWALK_SPAWN_PROFILE: task_name")
             print(f"PREWALK_TASK_NAME: {state.route_task_name}")
-            print(f"PREWALK_FORK_TURNS: {state.fork_turns}")
+            fork_turns = "none" if state.model_routing_proven else state.fork_turns
+            print(f"PREWALK_FORK_TURNS: {fork_turns}")
         print(f"PREWALK_EXECUTOR_MODEL: {state.executor_model}")
         if state.effort_routing_proven:
             print(f"PREWALK_EXECUTOR_EFFORT: {state.executor_effort}")
