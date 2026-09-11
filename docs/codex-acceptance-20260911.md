@@ -147,6 +147,15 @@ failed launch and the required fresh-context route instead of expecting a valid
 spawn to fail. Version contracts now distinguish Codex's supported cachebuster
 suffix from the shared release version.
 
+The external skill validator itself reads files using the platform default; its
+first Windows invocation failed on UTF-8 Markdown. All nine skills then passed
+with `python -X utf8 <quick_validate.py> <skill>`. This flag was limited to static
+validation, not the final real CLI sessions. No validator/native source was edited.
+
+Implementation commit `49d6a11` was fast-forwarded and pushed to origin/main and
+the development branch. The installed local source is the clean canonical main
+worktree; no force push or remote release was performed.
+
 ## Reproduction
 
 Use a new Codex thread after plugin installation. In a prepared temporary Git
