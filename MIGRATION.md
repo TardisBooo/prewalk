@@ -1,5 +1,11 @@
 # Migrating from Prewalk 0.3.x to 1.0.0
 
+## Upgrading from 1.0.4 to 1.0.5
+
+Prewalk 1.0.5 replaces PowerShell-only `commandWindows` entries with native
+`cmd.exe` commands. Reinstall the plugin so Codex loads the corrected hook
+manifest.
+
 ## Upgrading from 1.0.3 to 1.0.4
 
 Prewalk 1.0.4 moves the Codex hook manifest to the runtime-discovered

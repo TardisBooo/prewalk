@@ -1,10 +1,10 @@
 # Release checklist
 
-## v1.0.4
+## v1.0.5
 
 - [x] Codex discovers the manifest at `hooks/hooks.json`.
 - [ ] A disposable local Codex project completes a real Prewalk handoff.
-- [ ] Tag `v1.0.4` only after review.
+- [ ] Tag `v1.0.5` only after review.
 
 ## v1.0.3
 

@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.5
+
+- Fix Codex hooks on Windows by using native `cmd.exe` syntax in
+  `commandWindows`. Previous PowerShell syntax was accepted by discovery but
+  never launched the Python adapters.
+
 ## 1.0.4
 
 - Place the Codex hook manifest at the runtime-discovered
