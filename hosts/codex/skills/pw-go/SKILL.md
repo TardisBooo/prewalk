@@ -1,6 +1,6 @@
 ---
 name: pw-go
-description: Request a capability-safe executor handoff from a durable Prewalk Stop checkpoint.
+description: Request a capability-safe executor handoff from a durable Prewalk checkpoint.
 ---
 
 # $prewalk:pw-go - hand off to the executor
@@ -8,9 +8,11 @@ description: Request a capability-safe executor handoff from a durable Prewalk S
 Inspect the live `spawn_agent` schema first. Pass the field names it actually
 exposes to the state transition helper, then follow its output exactly:
 
-```bash
-python3 hooks/_pw.py go "${CODEX_THREAD_ID:-${CODEX_SESSION_ID:-}}" \
-  --schema-fields=<comma-separated live field names>
+Run the absolute helper path resolved from this skill's installed directory;
+keep the working directory at the user's project. On Windows use `python`.
+
+```text
+python <absolute-plugin-path>/hooks/_pw.py go <session-id> --schema-fields=<comma-separated live field names>
 ```
 
 Omit any field name that is absent from the live schema. Do not claim support

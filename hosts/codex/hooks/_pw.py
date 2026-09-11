@@ -74,13 +74,23 @@ def main() -> int:
         return 1
     store = _common.store_file()
 
+    if sub == "checkpoint":
+        if len(sys.argv) != 4:
+            raise ValueError("usage: _pw.py checkpoint <session_id> <workspace-packet-file>")
+        from _checkpoint import submit
+        return submit(store, session_id, sys.argv[3])
+
     if sub == "observe":
         from _observe import observe
         print(observe(store, session_id))
         return 0
 
     if sub == "go":
-        pending = core.load_v4_state(store, session_id).state
+        loaded = core.load_v4_state(store, session_id,
+                                    workspace_id=core.workspace_identity(_common.workspace_root()))
+        if loaded.status == "workspace_mismatch":
+            raise ValueError(loaded.message)
+        pending = loaded.state
         if pending and pending.phase in ("handoff_requested", "executor_running"):
             from _observe import observe
             print(observe(store, session_id))
@@ -143,4 +153,8 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    try:
+        raise SystemExit(main())
+    except (OSError, ValueError) as exc:
+        print(f"prewalk: operation failed; no new launch authorized: {exc}", file=sys.stderr)
+        raise SystemExit(1)

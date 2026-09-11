@@ -18,8 +18,12 @@ import prewalk_engine as core  # noqa: E402
 
 def main() -> int:
     payload = _common.read_input()
+    if not _common.normalize_edit_success(payload):
+        return 0
     sid = _common.session_id(payload)
-    store = _common.store_file()
+    store = _common.existing_store()
+    if store is None:
+        return 0
     loaded = core.load_v4_state(store, sid)
     if loaded.state is None or loaded.state.phase != core.V4_PLANNING:
         return 0

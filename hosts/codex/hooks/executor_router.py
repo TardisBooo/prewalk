@@ -62,7 +62,9 @@ def main() -> int:
     if not sid:
         return 0
     event = str(payload.get("hook_event_name") or payload.get("hookEventName") or "")
-    store = _common.store_file()
+    store = _common.existing_store()
+    if store is None:
+        return 0
 
     if event == "PreToolUse" and _tool_name(payload) == "spawn_agent":
         tool_input = _part(payload, "tool_input", "toolInput")

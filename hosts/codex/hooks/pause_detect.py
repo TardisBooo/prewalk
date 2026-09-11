@@ -25,7 +25,9 @@ def main() -> int:
     payload = _common.read_input()
     event = str(payload.get("hook_event_name") or "Stop")
     sid = _common.session_id(payload)
-    store = _common.store_file()
+    store = _common.existing_store()
+    if store is None:
+        return 0
 
     if event != "Stop":
         return 0

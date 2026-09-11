@@ -30,6 +30,31 @@ import sys
 import _engine  # noqa: F401  (makes prewalk_engine importable)
 import prewalk_engine as core  # noqa: E402
 
+_context: dict = {}
+
+
+def workspace_root() -> str:
+    """Resolve the host workspace, never the plugin helper's working directory."""
+    if _context.get("cwd"):
+        return str(Path(_context["cwd"]).resolve())
+    sid = _context.get("session_id") or os.environ.get("CODEX_THREAD_ID", "")
+    if sid and re.fullmatch(r"[A-Za-z0-9_-]+", sid):
+        matches = list((Path(codex_home()) / "sessions").rglob(f"*-{sid}.jsonl"))
+        if len(matches) > 1:
+            raise ValueError("prewalk: ambiguous session journals; workspace unresolved")
+        if matches:
+            with matches[0].open(encoding="utf-8") as stream:
+                event = json.loads(stream.readline())
+            meta = event.get("payload", {})
+            if event.get("type") != "session_meta" or meta.get("id") != sid or not meta.get("cwd"):
+                raise ValueError("prewalk: invalid session metadata; workspace unresolved")
+            return str(Path(meta["cwd"]).resolve())
+    cwd = Path.cwd().resolve()
+    plugin = Path(__file__).resolve().parents[1]
+    if cwd == plugin or plugin in cwd.parents:
+        raise ValueError("prewalk: workspace unresolved; run the absolute helper from the project directory")
+    return str(cwd)
+
 
 def codex_home() -> str:
     return os.environ.get("CODEX_HOME") or os.path.expanduser("~/.codex")
@@ -39,7 +64,20 @@ def store_file() -> str:
     override = os.environ.get("PREWALK_STATE_FILE", "").strip()
     if override:
         return str(Path(os.path.expandvars(override)).expanduser())
-    return os.path.join(codex_home(), "prewalk-state.json")
+    local = Path(workspace_root()) / ".prewalk" / "state.json"
+    sid = _context.get("session_id") or os.environ.get("CODEX_THREAD_ID", "")
+    # Preserve existing runs in place. Never silently re-arm/migrate historical
+    # state, and never let an unrelated global run force new runs out of sandbox.
+    legacy = Path(codex_home()) / "prewalk-state.json"
+    for path in (local, legacy):
+        if path.is_file():
+            with path.open(encoding="utf-8") as stream:
+                data = json.load(stream)
+            if not isinstance(data, dict):
+                raise ValueError(f"prewalk: invalid state store: {path}")
+            if sid in data:
+                return str(path)
+    return str(local)
 
 
 def state_store_access() -> tuple[bool, str]:
@@ -54,6 +92,12 @@ def state_store_access() -> tuple[bool, str]:
     return True, str(path)
 
 
+def existing_store() -> str | None:
+    """Unarmed hooks must not create state/lock files in unrelated projects."""
+    path = store_file()
+    return path if Path(path).is_file() else None
+
+
 def presets_file() -> str:
     return os.path.join(codex_home(), "prewalk-presets.toml")
 
@@ -64,7 +108,11 @@ def read_input() -> dict:
     if not raw.strip():
         return {}
     try:
-        return json.loads(raw)
+        payload = json.loads(raw)
+        if not isinstance(payload, dict):
+            raise ValueError("prewalk: hook payload must be an object")
+        _context.update({key: payload[key] for key in ("cwd", "session_id") if key in payload})
+        return payload
     except json.JSONDecodeError:
         return {}
 
@@ -90,8 +138,11 @@ def resolve_session_id(given: str) -> str:
     given = (given or "").strip()
     thread_id = os.environ.get("CODEX_THREAD_ID", "").strip()
     if thread_id:
-        return thread_id if not given or given == thread_id else ""
+        resolved = thread_id if not given or given == thread_id else ""
+        _context["session_id"] = resolved
+        return resolved
     if given:
+        _context["session_id"] = given
         return given
     return os.environ.get("CODEX_SESSION_ID", "").strip()
 
@@ -331,6 +382,10 @@ def normalize_mutation_success(payload: dict) -> bool:
     if not name:
         return True  # Hook matchers already scoped legacy payloads to edit tools.
     if name in ("apply_patch", "edit", "write", "multiedit"):
+        details = response.get("details", {}) if isinstance(response, dict) else {}
+        if isinstance(details, dict) and "xdev" in details:
+            device = details["xdev"]
+            return isinstance(device, dict) and device.get("tier") in ("write", "exec")
         return True
     if name in ("bash", "exec", "exec_command"):
         return _shell_applies_patch(payload) or _orchestrator_applies_patch(payload)

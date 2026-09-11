@@ -27,13 +27,22 @@ import prewalk_engine as core  # noqa: E402
 def main() -> int:
     payload = _common.read_input()
     sid = _common.session_id(payload)
-    store = _common.store_file()
+    store = _common.existing_store()
+    if store is None:
+        return 0
     loaded = core.load_v4_state(store, sid)
     if loaded.state is None or loaded.state.phase != core.V4_PLANNING:
         return 0
     if not _common.normalize_mutation_success(payload):
         return 0
     _, nudge = core.note_v4_planner_mutation(store, sid)
+    if loaded.state.fast_mode and loaded.state.todos:
+        nudge = (
+            "Prewalk fast gate opened: a saved plan was followed by a successful write. "
+            "Finish verification of this first task, save the handoff packet and submit it "
+            "with _pw.py checkpoint. After the durable receipt says next=pw-go, follow "
+            "$prewalk:pw-go now. Do not implement the remaining tasks in the planner."
+        )
     if nudge:
         _common.emit(core.HookAction(
             additional_context=nudge,

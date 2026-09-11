@@ -27,7 +27,7 @@ class CheckpointProcessFlow(unittest.TestCase):
 
             def run(script, args=(), payload=None):
                 result = subprocess.run(
-                    [sys.executable, str(hooks / script), *args], env=env,
+                    [sys.executable, str(hooks / script), *args], env=env, cwd=root,
                     input=json.dumps(payload, ensure_ascii=False) if payload else None,
                     capture_output=True, text=True, encoding="utf-8", timeout=30)
                 self.assertEqual(result.returncode, 0, result.stderr)

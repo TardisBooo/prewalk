@@ -107,7 +107,7 @@ def cmd_arm(session_id: str, rest: list[str]) -> int:
 
     try:
         core.start_v4_run(
-            _common.store_file(), session_id, os.getcwd(), "codex", preset, fast_mode=auto_swap
+            _common.store_file(), session_id, _common.workspace_root(), "codex", preset, fast_mode=auto_swap
         )
     except OSError as exc:
         print(
@@ -298,7 +298,6 @@ def main() -> int:
         return 2
     sub, session_id = sys.argv[1], sys.argv[2]
     rest = sys.argv[3:]
-    store = _common.store_file()
     if sub == "doctor":
         return cmd_doctor(session_id, rest)
     session_id = _common.resolve_session_id(session_id)
@@ -309,10 +308,11 @@ def main() -> int:
             file=sys.stderr,
         )
         return 1
+    store = _common.store_file()
     if sub == "arm":
         return cmd_arm(session_id, rest)
     if sub == "status":
-        workspace_id = core.workspace_identity(os.getcwd())
+        workspace_id = core.workspace_identity(_common.workspace_root())
         core.detect_v4_stale(store, session_id, workspace_id=workspace_id)
         loaded = core.load_v4_state(
             store, session_id, workspace_id=workspace_id
@@ -327,4 +327,8 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    try:
+        raise SystemExit(main())
+    except (OSError, ValueError) as exc:
+        print(f"prewalk: operation failed; state not acknowledged: {exc}", file=sys.stderr)
+        raise SystemExit(1)
