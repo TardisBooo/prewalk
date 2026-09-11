@@ -11,7 +11,7 @@
     {
       "name": "prewalk",
       "description": "Frontier model explores, plans, and lands the first verified edit, then hands a token-bound handoff to a configured executor agent.",
-      "version": "1.0.6",
+      "version": "1.0.7",
       "author": {
         "name": "TardisBooo"
       },

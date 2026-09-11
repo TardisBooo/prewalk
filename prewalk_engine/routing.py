@@ -154,12 +154,6 @@ def codex_route_message(state: V4State) -> str:
     repeated. ``fork_turns="none"``: a fresh-context executor gets the full
     packet as before.
     """
-    if state.fork_turns == "all":
-        return (
-            f"PREWALK_ROUTE_TOKEN: {state.route_token}\n\n"
-            f"{FORK_HANDOFF_NOTE}\n\n## Executor Contract\n"
-            f"{CODEX_EXECUTOR_INSTRUCTIONS}"
-        )
     return (
         f"PREWALK_ROUTE_TOKEN: {state.route_token}\n\n"
         f"{HANDOFF_NOTE}\n\n{state.packet}\n\n## Executor Contract\n"
@@ -604,7 +598,9 @@ def validate_codex_spawn(
     if str(tool_input.get("message") or "") != expected_message:
         errors.append("message is not the exact persisted Prewalk route message")
     if "fork_context" in tool_input:
-        expected_fork_context = state.fork_turns == "all"
+        # Current Codex forbids model/reasoning overrides with full-history
+        # forks. A pinned executor receives the durable packet in the message.
+        expected_fork_context = False if state.model_routing_proven else state.fork_turns == "all"
         if tool_input.get("fork_context") is not expected_fork_context:
             errors.append(f"fork_context must be {str(expected_fork_context).lower()}")
         if "task_name" in tool_input or "fork_turns" in tool_input:

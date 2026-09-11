@@ -1,5 +1,10 @@
 # Migrating from Prewalk 0.3.x to 1.0.0
 
+## Upgrading from 1.0.6 to 1.0.7
+
+Prewalk 1.0.7 maps current Codex model-pinned routes to
+`fork_context=false`; the durable packet supplies the executor context.
+
 ## Upgrading from 1.0.5 to 1.0.6
 
 Prewalk 1.0.6 uses Codex's `${PLUGIN_ROOT}` hook placeholder. Reinstall the

@@ -41,7 +41,8 @@ def _print_route(result: core.V4CheckpointResult, schema_fields: set[str]) -> No
         state = result.state
         if "fork_context" in schema_fields:
             print("PREWALK_SPAWN_PROFILE: fork_context")
-            print(f"PREWALK_FORK_CONTEXT: {str(state.fork_turns == 'all').lower()}")
+            fork_context = False if state.model_routing_proven else state.fork_turns == "all"
+            print(f"PREWALK_FORK_CONTEXT: {str(fork_context).lower()}")
         else:
             print("PREWALK_SPAWN_PROFILE: task_name")
             print(f"PREWALK_TASK_NAME: {state.route_task_name}")

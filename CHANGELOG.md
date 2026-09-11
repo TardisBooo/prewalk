@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.7
+
+- Route current Codex `fork_context` spawns with fresh context when pinning an
+  executor model, and always include the durable packet in the route message.
+
 ## 1.0.6
 
 - Use Codex's load-time `${PLUGIN_ROOT}` placeholder in Windows hook commands;

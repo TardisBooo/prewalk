@@ -88,7 +88,7 @@ class V4CodexRouteTests(unittest.TestCase):
 
     def exact_fork_context_input(self, state: core.V4State) -> dict:
         return {
-            "fork_context": True,
+            "fork_context": False,
             "message": core.codex_route_message(state),
             "model": state.executor_model,
             "reasoning_effort": state.executor_effort,
@@ -112,9 +112,9 @@ class V4CodexRouteTests(unittest.TestCase):
         self.assertEqual(result.status, "handoff_requested")
         self.assertTrue(state.model_routing_proven)
         self.assertTrue(state.effort_routing_proven)
-        # Default fork_turns="all": a short phase-2 note; the packet is not echoed.
-        self.assertIn(core.FORK_HANDOFF_NOTE, result.message)
-        self.assertNotIn(PACKET, result.message)
+        # The durable packet is always present so current-schema model routing
+        # can safely use fork_context=false.
+        self.assertIn(PACKET, result.message)
         self.assertEqual(result.message, core.codex_route_message(state))
         self.assertIn(state.route_token, result.message)
 
@@ -150,12 +150,12 @@ class V4CodexRouteTests(unittest.TestCase):
     def test_current_schema_rejects_wrong_fork_context(self) -> None:
         state = self.request_fork_context().state
         malformed = self.exact_fork_context_input(state)
-        malformed["fork_context"] = False
+        malformed["fork_context"] = True
         decision = core.validate_codex_spawn(
             self.store, self.session_id, malformed, tool_use_id="tool-wrong-fork"
         )
         self.assertFalse(decision.allowed)
-        self.assertIn("fork_context must be true", decision.message)
+        self.assertIn("fork_context must be false", decision.message)
 
     def test_malformed_intended_spawn_is_denied_and_becomes_retryable(self) -> None:
         state = self.request().state

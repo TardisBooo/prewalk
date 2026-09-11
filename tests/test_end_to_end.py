@@ -173,10 +173,10 @@ class EndToEndFlowTests(unittest.TestCase):
         tool_input = self.request_codex_route(session_id)
         self.assertEqual(tool_input["fork_turns"], "all")
         self.assertEqual(tool_input["model"], "gpt-5.6-terra")
-        # fork_turns="all": short phase-2 note; the packet rides in via the
-        # inherited trajectory, so it is intentionally absent from the message.
+        # The durable packet is included so current Codex can use a fresh
+        # context when pinning an executor model.
         self.assertIn("PREWALK HANDOFF:", tool_input["message"])
-        self.assertNotIn(PACKET, tool_input["message"])
+        self.assertIn(PACKET, tool_input["message"])
 
         accepted = self.run_script("codex", "executor_router.py", payload={
             "session_id": session_id,
@@ -222,10 +222,10 @@ class EndToEndFlowTests(unittest.TestCase):
             r"PREWALK_MESSAGE_BEGIN\n(.*)\nPREWALK_MESSAGE_END", handoff.stdout, re.S
         ).group(1)
         self.assertEqual(fields["SPAWN_PROFILE"], "fork_context")
-        self.assertEqual(fields["FORK_CONTEXT"], "true")
+        self.assertEqual(fields["FORK_CONTEXT"], "false")
         self.assertNotIn("TASK_NAME", fields)
         tool_input = {
-            "fork_context": True,
+            "fork_context": False,
             "message": message,
             "model": fields["EXECUTOR_MODEL"],
         }
@@ -309,7 +309,7 @@ class EndToEndFlowTests(unittest.TestCase):
         self.assertEqual(first.stdout, second.stdout)
         self.assertIn("PREWALK_FORK_TURNS: all", first.stdout)
         self.assertIn("PREWALK HANDOFF:", first.stdout)
-        self.assertNotIn(PACKET, first.stdout)
+        self.assertIn(PACKET, first.stdout)
         state = self.codex_state(session_id)
         self.assertEqual(state["route_attempt"], 2)
         self.assertEqual(state["todos"][0]["status"], "completed")
@@ -440,7 +440,7 @@ class EndToEndFlowTests(unittest.TestCase):
         )
         self.assertIn("PREWALK_FORK_TURNS: all", handoff.stdout)
         self.assertIn("PREWALK HANDOFF:", handoff.stdout)
-        self.assertNotIn(PACKET, handoff.stdout)
+        self.assertIn(PACKET, handoff.stdout)
 
         store = Path(self.temp_dir.name) / "codex" / "prewalk-state.json"
         record = json.loads(store.read_text(encoding="utf-8"))[session_id]

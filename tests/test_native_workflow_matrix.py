@@ -87,7 +87,7 @@ class NativeWorkflowMatrixTests(unittest.TestCase):
             "assert_plugin_version",
             "prepare_upgrade_fixture",
             "0.3.1",
-            "1.0.6",
+            "1.0.7",
             "PREWALK_REQUIRE_NATIVE_CLIS",
         ):
             self.assertIn(required, script)
