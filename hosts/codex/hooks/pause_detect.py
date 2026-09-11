@@ -34,6 +34,7 @@ def main() -> int:
 
     todos = _common.normalize_todos(payload)
     if not sid:
+        _common.emit(core.HookAction(system_message="prewalk: Stop ignored: missing or conflicting session identity"), event="Stop")
         return 0
     reason = str(payload.get("reason") or payload.get("stop_reason") or payload.get("stopReason") or "")
     interrupted = core.interrupt_v4_executor(
@@ -46,6 +47,8 @@ def main() -> int:
         _common.emit(core.HookAction(system_message=interrupted.message), event="Stop")
         return 0
     active = core.load_v4_state(store, sid).state
+    if active:
+        _common.audit("Stop", "received", phase=active.phase)
     if active and active.phase in ("handoff_requested", "executor_running"):
         from _observe import observe
         _common.emit(core.HookAction(system_message=observe(store, sid)), event="Stop")
@@ -59,6 +62,9 @@ def main() -> int:
     result = core.capture_v4_checkpoint(
         store, sid, packet=packet, todos=todos or None, event_id=event_id
     )
+    if active:
+        _common.audit("checkpoint", result.status, packet_chars=len(packet),
+                      packet_sha256=hashlib.sha256(packet.encode("utf-8")).hexdigest())
     if result.message:
         if (
             result.status == "checkpoint_ready"
@@ -115,4 +121,8 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    try:
+        raise SystemExit(main())
+    except (OSError, ValueError) as exc:
+        _common.emit(core.HookAction(system_message=f"prewalk: Stop processing failed: {exc}"), event="Stop")
+        raise SystemExit(1)

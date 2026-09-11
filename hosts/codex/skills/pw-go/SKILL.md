@@ -18,9 +18,14 @@ python <absolute-plugin-path>/hooks/_pw.py go <session-id> --schema-fields=<comm
 Omit any field name that is absent from the live schema. Do not claim support
 from a preset or documentation; only the current tool schema is proof.
 
-If no active checkpoint exists, report the helper's phase and last checkpoint
-error and stop. Do not disarm or label the task trivial. A planning run stays
-recoverable until a valid packet is captured or the user explicitly ends it.
+If the run is still planning, run `recover <session-id>` to list valid final
+packets from this exact session's journal. This command does not change state.
+If exactly one candidate is the plan the user has just approved, use
+`recover <session-id> --ordinal=<its ordinal>`, then rerun go. If candidates are
+absent, ambiguous, or not the approved plan, report the phase, error and candidate
+information and stop for clarification. Never re-arm, select another session,
+invent evidence, or label the task trivial. Recovery retains the source store
+and journal unchanged and writes the recovered checkpoint in the real workspace.
 
 ## Native spawn path
 
@@ -47,3 +52,7 @@ recoverable until a valid packet is captured or the user explicitly ends it.
 
 Do not run manual confirm/complete commands. Spawn denial, failure, interruption,
 missing markers, and incomplete markers remain durable for `pw-retry` recovery.
+Do not automatically retry a deterministic permission/configuration failure.
+Report the retained checkpoint and the unmet prerequisite; retry only after
+that prerequisite changes. A completed file task is not permission to bypass
+the sandbox for an additional commit or publication step.

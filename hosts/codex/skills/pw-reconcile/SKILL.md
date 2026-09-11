@@ -12,9 +12,12 @@ unknown, report that and stop.
 Only after the native runtime proves the persisted agent is absent/stopped, or
 the user explicitly confirms it was interrupted, run:
 
-```bash
-python3 hooks/_pw.py reconcile "${CODEX_THREAD_ID:-${CODEX_SESSION_ID:-}}" \
-  --confirmed-not-running "<evidence or user confirmation>"
+Use the absolute helper path resolved from this installed skill, with the shell
+working directory set to the user's project. On Windows use `python`.
+Pass the actual session ID; do not change directories to the plugin.
+
+```text
+python <absolute-plugin-path>/hooks/_pw.py reconcile <session-id> --confirmed-not-running "<evidence or user confirmation>"
 ```
 
 Without that proof, run the helper without `--confirmed-not-running`; it must

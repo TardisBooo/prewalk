@@ -7,9 +7,12 @@ description: Diagnose the Prewalk installation, presets, hook manifest, state di
 
 Inspect the live `spawn_agent` schema, then pass exactly the fields it exposes:
 
-```bash
-python3 hooks/_arm.py doctor "${CODEX_THREAD_ID:-${CODEX_SESSION_ID:-}}" \
-  --schema-fields=<comma-separated live field names>
+Use the absolute helper path resolved from this installed skill, with the shell
+working directory set to the user's project. On Windows use `python`.
+Pass the actual session ID; do not change directories to the plugin.
+
+```text
+python <absolute-plugin-path>/hooks/_arm.py doctor <session-id> --schema-fields=<comma-separated live field names>
 ```
 
 Omit absent fields and do not call the tool. A missing model argument means

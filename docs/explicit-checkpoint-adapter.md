@@ -1,4 +1,7 @@
-# Explicit checkpoint adapter (development, not live acceptance)
+# Explicit checkpoint adapter
+
+Live acceptance and registration results are in
+[codex-acceptance-20260911.md](codex-acceptance-20260911.md).
 
 ## Why
 
@@ -37,16 +40,24 @@ advertise identical same-session execution semantics.
 
 ## Boundaries and remaining work
 
-This is the first independently testable adapter change, not a complete oh-my-pi
-port. It retains the engine's verified-task-one and two-remaining-task rules.
-Native todo `view` gate parity, a persisted one-shot fast gate, richer Stop
-diagnostics, and explicit legacy recovery still need implementation/acceptance.
-Fast without host events is driven by the skill's explicit packet submission.
+Codex now accepts one remaining task. Successful todo/view events persist
+`plan_seen`; the first subsequent successful workspace mutation persists
+`fast_gate_open` and emits the handoff-preparation nudge once. Failed todo calls,
+read-only device calls and manual mode cannot open that gate. Fast without host
+events is driven by the skill's explicit packet submission. The verified-task-one
+and structured-packet rules remain intentional safety requirements for fresh child
+context; this is not oh-my-pi's native same-session model setter.
 
-Installation validation is currently blocked: `codex plugin list` fails because
-the configured `atom-agent-lab` marketplace points to a legacy directory without
-a supported manifest. No native Codex configuration was changed to bypass it.
-The plugin update skill requires resolving marketplace provenance before reinstall.
+Stop receipt/capture diagnostics go to plugin-local `events.jsonl`, without prompt
+contents. Explicit recovery lists exact-session final packet ordinals read-only,
+then captures only a selected ordinal. Both Codex `phase: final_answer` and
+`channel: final` formats are supported. Global legacy state and journals remain
+unchanged; recovery writes the correctly bound project-local checkpoint.
+
+Registration was repaired with plugin management commands after user approval.
+The invalid atom-agent-lab registration was removed and recorded in
+`D:/Catalog/SessionMaps/prewalk-plugin-registration-20260911.md`. Prewalk is bound
+to this canonical local repository and installed through `codex plugin add`.
 
 ## Checks (no models or benchmarks)
 
@@ -59,8 +70,9 @@ Run from the repository with `python -m unittest discover -s tests -p <file>`:
 - `test_hook_adapters.py`, `test_arm_args.py`, `test_v4_checkpoint.py`,
   `test_v4_codex_route.py`, `test_codex_journal_observer.py`: affected regressions.
 
-Process tests simulate host payloads/metadata; they are not real model acceptance.
-After installation is repaired, replay the user's three-task manual sequence and
-its `--fast` variant in `E:/Workspaces/_verification`, normal workspace-write,
-without bypassing hook trust. Require actual Luna child model/effort evidence,
-exact output checks and terminal state. Do not rerun business research or benchmarks.
+Process tests simulate host payloads/metadata and are distinct from real model
+acceptance. Both manual and fast CLI scenarios have now been run with normal
+workspace-write and no hook-trust bypass. See the acceptance report for native
+session identities, the failed Git-commit fixture, successful corrected fixture,
+and independent model/content/terminal checks. No benchmark or business research
+was rerun.

@@ -36,6 +36,8 @@ def submit(store: str, sid: str, packet_path: str) -> int:
     state = core.load_v4_state(store, sid).state
     if state is None or state.phase != "checkpoint_ready" or state.packet != packet:
         raise ValueError("checkpoint read-back mismatch; no handoff authorized")
+    _common.audit("explicit_checkpoint", "checkpoint_ready", revision=state.revision,
+                  packet_sha256=hashlib.sha256(packet.encode("utf-8")).hexdigest())
     print(json.dumps({"status": "checkpoint_ready", "session_id": sid,
                       "workspace": str(workspace), "store": store,
                       "revision": state.revision,

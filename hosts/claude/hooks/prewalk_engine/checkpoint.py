@@ -211,7 +211,7 @@ def capture_v4_checkpoint(
     if remaining == 0:
         clear_state(store_file, root_session_id)
         return V4CheckpointResult("complete", NO_HANDOFF_NEEDED)
-    if remaining == 1:
+    if remaining == 1 and state.host != "codex":
         clear_state(store_file, root_session_id)
         return V4CheckpointResult("one_remaining", ONE_LEFT_HINT)
 
@@ -343,7 +343,7 @@ def v4_handoff_context(
 def revise_v4_checkpoint(
     store_file: str | os.PathLike[str], root_session_id: str, revision: str
 ) -> V4CheckpointResult:
-    """Return a durable checkpoint to planning so root Stop can replace it.
+    """Return a durable checkpoint to planning for explicit or Stop replacement.
 
     Revision wipes the captured packet and every route identity but keeps the
     todo snapshot (task 1 stays done); the frontier re-plans only what the
@@ -368,6 +368,9 @@ def revise_v4_checkpoint(
         event_id=event_id,
         updates={
             "packet": "",
+            "fast_mode": False if state.host == "codex" else state.fast_mode,
+            "plan_seen": False,
+            "fast_gate_open": False,
             "verification_evidence": [],
             "verification_warning": "",
             "checkpoint_at": "",

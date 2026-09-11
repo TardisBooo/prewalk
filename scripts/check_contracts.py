@@ -89,7 +89,7 @@ def validate_repo(root: Path) -> None:
     )
     versions = {
         claude_manifest["version"],
-        codex_manifest["version"],
+        codex_manifest["version"].split("+codex.", 1)[0],
         claude_marketplace["plugins"][0]["version"],
     }
     codex_marketplace_version = codex_marketplace["plugins"][0].get("version")

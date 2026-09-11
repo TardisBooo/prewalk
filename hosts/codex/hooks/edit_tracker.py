@@ -36,7 +36,10 @@ def main() -> int:
     if not _common.normalize_mutation_success(payload):
         return 0
     _, nudge = core.note_v4_planner_mutation(store, sid)
-    if loaded.state.fast_mode and loaded.state.todos:
+    if loaded.state.fast_mode and loaded.state.plan_seen and not loaded.state.fast_gate_open:
+        core.apply_v4_transition(store, sid, expected_phases=["planning"],
+                                 target_phase="planning", event_id="codex-fast-gate",
+                                 updates={"fast_gate_open": True})
         nudge = (
             "Prewalk fast gate opened: a saved plan was followed by a successful write. "
             "Finish verification of this first task, save the handoff packet and submit it "

@@ -30,6 +30,13 @@ import sys
 import _engine  # noqa: F401  (makes prewalk_engine importable)
 import prewalk_engine as core  # noqa: E402
 
+# Codex hook JSON and command output are UTF-8. Windows Python otherwise uses
+# GBK on this host, corrupting Chinese packets or failing before JSON parsing.
+# Own the wire encoding inside the plugin, not through global environment edits.
+for _stream in (sys.stdin, sys.stdout, sys.stderr):
+    if hasattr(_stream, "reconfigure"):
+        _stream.reconfigure(encoding="utf-8")
+
 _context: dict = {}
 
 
@@ -96,6 +103,20 @@ def existing_store() -> str | None:
     """Unarmed hooks must not create state/lock files in unrelated projects."""
     path = store_file()
     return path if Path(path).is_file() else None
+
+
+def audit(stage: str, status: str, **details) -> None:
+    """Best-effort plugin diagnostics, without copying prompts or credentials."""
+    from datetime import datetime, timezone
+    try:
+        path = Path(store_file()).with_name("events.jsonl")
+        event = {"timestamp": datetime.now(timezone.utc).isoformat(),
+                 "session_id": _context.get("session_id", ""),
+                 "stage": stage, "status": status, **details}
+        with path.open("a", encoding="utf-8") as stream:
+            stream.write(json.dumps(event, ensure_ascii=True) + "\n")
+    except (OSError, ValueError) as exc:
+        print(f"prewalk: diagnostics unavailable: {exc}", file=sys.stderr)
 
 
 def presets_file() -> str:

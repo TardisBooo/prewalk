@@ -86,8 +86,13 @@ class V4OperationTests(unittest.TestCase):
             },
             tool_use_id="tool-failed",
         )
-        self.assertFalse(decision.allowed)
-        return decision.state
+        self.assertTrue(decision.allowed)
+        failed = core.bind_codex_executor(
+            self.store, self.session_id, tool_use_id="tool-failed", agent_id="",
+            success=False, detail=reason,
+        )
+        self.assertEqual(failed.state.phase, "incomplete")
+        return failed.state
 
     def test_status_exposes_operations_but_never_token_or_packet(self) -> None:
         state = self.request()
@@ -124,7 +129,7 @@ class V4OperationTests(unittest.TestCase):
             {
                 "task_name": state.route_task_name,
                 "message": core.codex_route_message(state),
-                "fork_turns": "all",
+                "fork_turns": "none",
                 "model": state.executor_model,
             },
             tool_use_id="tool-route",

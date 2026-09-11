@@ -120,6 +120,8 @@ class V4State:
     require_model_routing: bool = True
     fork_turns: str = "all"
     fast_mode: bool = False
+    plan_seen: bool = False
+    fast_gate_open: bool = False
     checkpoint_rejects: int = 0
     planner_mutations: int = 0
     model_routing_proven: bool = False
@@ -285,6 +287,8 @@ def validate_v4_state(state: V4State) -> None:
     if (
         not isinstance(state.require_model_routing, bool)
         or not isinstance(state.fast_mode, bool)
+        or not isinstance(state.plan_seen, bool)
+        or not isinstance(state.fast_gate_open, bool)
         or not isinstance(state.model_routing_proven, bool)
         or not isinstance(state.effort_routing_proven, bool)
         or not isinstance(state.launch_acknowledged, bool)
@@ -324,8 +328,8 @@ def validate_v4_state(state: V4State) -> None:
             raise V4StateError("checkpoint phases require a durable todo snapshot")
         if state.todos[0].status != "completed":
             raise V4StateError("checkpoint task 1 must be completed")
-        if count_remaining(state.todos) < 2:
-            raise V4StateError("checkpoint requires at least two remaining real tasks")
+        if count_remaining(state.todos) < (1 if state.host == "codex" else 2):
+            raise V4StateError("checkpoint requires remaining real tasks")
         missing = missing_packet_headings(state.packet)
         if missing:
             raise V4StateError("checkpoint packet is missing headings: " + ", ".join(missing))

@@ -74,6 +74,11 @@ def main() -> int:
         return 1
     store = _common.store_file()
 
+    if sub == "recover":
+        from _recover import recover
+        ordinal = next((arg.partition("=")[2] for arg in sys.argv[3:] if arg.startswith("--ordinal=")), None)
+        return recover(session_id, ordinal)
+
     if sub == "checkpoint":
         if len(sys.argv) != 4:
             raise ValueError("usage: _pw.py checkpoint <session_id> <workspace-packet-file>")
@@ -103,6 +108,12 @@ def main() -> int:
         return 0
 
     if sub == "retry":
+        previous = core.load_v4_state(store, session_id).state
+        if previous and any(word in previous.last_error.lower() for word in
+                            ("permission denied", "read-only", "not writable", "credentials", "sandbox")):
+            if "--prerequisite-resolved" not in sys.argv[3:]:
+                raise ValueError("retry blocked: resolve the recorded permission/configuration prerequisite first; "
+                                 "then explicitly pass --prerequisite-resolved")
         fields = _schema_fields(sys.argv[3:])
         prepared = core.prepare_v4_retry(store, session_id)
         if prepared.status in ("checkpoint_ready", "handoff_requested"):

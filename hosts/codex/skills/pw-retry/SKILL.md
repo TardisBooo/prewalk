@@ -5,11 +5,19 @@ description: Retry one proven-incomplete Prewalk route from its durable packet w
 
 # Prewalk Retry
 
+For permission/configuration failures, first confirm the reported prerequisite
+has changed. Do not relaunch the same packet into the same known blocker.
+Only after checking that change, pass `--prerequisite-resolved` if the helper
+requires it. The flag acknowledges a verified change; it is not a bypass.
+
 Inspect the live `spawn_agent` schema exactly as for `$prewalk:pw-go`, then run:
 
-```bash
-python3 hooks/_pw.py retry "${CODEX_THREAD_ID:-${CODEX_SESSION_ID:-}}" \
-  --schema-fields=<comma-separated live field names>
+Use the absolute helper path resolved from this installed skill, with the shell
+working directory set to the user's project. On Windows use `python`.
+Pass the actual session ID; do not change directories to the plugin.
+
+```text
+python <absolute-plugin-path>/hooks/_pw.py retry <session-id> --schema-fields=<comma-separated live field names>
 ```
 
 Omit schema fields that are absent. If the helper emits a route, make exactly

@@ -182,8 +182,8 @@ print(json.dumps({"status": result.status, "message": result.message, "packet": 
         self.assertEqual(result.state.verification_evidence, [])
         self.assertIn("WARNING", result.state.verification_warning)
 
-    def test_zero_or_one_remaining_stays_in_the_root_session(self) -> None:
-        for remaining, expected in ((0, "complete"), (1, "one_remaining")):
+    def test_codex_can_handoff_one_remaining_task(self) -> None:
+        for remaining, expected in ((0, "complete"), (1, "checkpoint_ready")):
             with self.subTest(remaining=remaining):
                 core.start_v4_run(
                     self.store, self.session_id, self.root, "codex", self.preset
@@ -195,7 +195,10 @@ print(json.dumps({"status": result.status, "message": result.message, "packet": 
                     todos=todos(remaining=remaining),
                 )
                 self.assertEqual(result.status, expected)
-                self.assertIsNone(self.load())
+                if remaining:
+                    self.assertEqual(self.load().phase, "checkpoint_ready")
+                else:
+                    self.assertIsNone(self.load())
 
     def test_todo_updates_record_real_work_without_advancing_phase(self) -> None:
         recorded = core.record_v4_todos(self.store, self.session_id, todos())

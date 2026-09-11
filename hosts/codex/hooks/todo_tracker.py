@@ -28,6 +28,11 @@ def main() -> int:
     if loaded.state is None or loaded.state.phase != core.V4_PLANNING:
         return 0
 
+    if not loaded.state.plan_seen:
+        core.apply_v4_transition(store, sid, expected_phases=["planning"],
+                                 target_phase="planning", event_id="codex-plan-seen",
+                                 updates={"plan_seen": True})
+
     todos = _common.normalize_todos(payload)
     if not todos or not _common.has_complete_todo_snapshot(payload):
         return 0
