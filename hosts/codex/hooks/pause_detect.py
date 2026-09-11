@@ -43,6 +43,11 @@ def main() -> int:
     if interrupted.handled:
         _common.emit(core.HookAction(system_message=interrupted.message), event="Stop")
         return 0
+    active = core.load_v4_state(store, sid).state
+    if active and active.phase in ("handoff_requested", "executor_running"):
+        from _observe import observe
+        _common.emit(core.HookAction(system_message=observe(store, sid)), event="Stop")
+        return 0
     packet = str(
         payload.get("last_assistant_message")
         or payload.get("lastAssistantMessage")

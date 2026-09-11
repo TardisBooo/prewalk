@@ -35,6 +35,13 @@ recoverable until a valid packet is captured or the user explicitly ends it.
    Do not use a named plugin agent and do not alter the message.
 3. Wait for the bound executor. Codex hooks bind the agent ID returned by this
    exact tool call and consume only that agent's `SubagentStop` marker.
+   On collaboration runtimes without these hooks, run the same helper with
+   `observe <session_id>` after spawn and after the executor returns. It reads
+   the runtime's own journals to verify the exact call, parent/child identity,
+   actual model/effort and child terminal event. Never supply completion text
+   or an agent ID yourself. An unresolved observation retains state; do not
+   spawn again. This fallback observes launches after the fact; it cannot
+   enforce pre-launch denial on a host that omits tool hooks.
 
 Do not run manual confirm/complete commands. Spawn denial, failure, interruption,
 missing markers, and incomplete markers remain durable for `pw-retry` recovery.

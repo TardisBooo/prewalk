@@ -5,6 +5,7 @@ Invoked by the ``$pw-go`` / ``$pw-revise`` / ``$pw-retry`` /
 ``$pw-reconcile`` / ``$pw-resume`` / ``$pw-off`` skills:
 
   _pw.py go        <session_id> [--schema-fields=...]
+  _pw.py observe   <session_id> (read runtime evidence; never accepts a result)
   _pw.py revise    <session_id> [revision text...]
   _pw.py retry     <session_id> --schema-fields=...
   _pw.py reconcile <session_id> [--confirmed-not-running] [detail...]
@@ -73,7 +74,17 @@ def main() -> int:
         return 1
     store = _common.store_file()
 
+    if sub == "observe":
+        from _observe import observe
+        print(observe(store, session_id))
+        return 0
+
     if sub == "go":
+        pending = core.load_v4_state(store, session_id).state
+        if pending and pending.phase in ("handoff_requested", "executor_running"):
+            from _observe import observe
+            print(observe(store, session_id))
+            return 0
         fields = _schema_fields(sys.argv[3:])
         result = core.request_codex_handoff(
             store, session_id, schema_fields=fields

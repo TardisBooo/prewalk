@@ -17,3 +17,8 @@ spawn handoff cannot honor presets with
 `require_model_routing=true`; recommend the manual model + `pw-resume` fallback.
 Also report a missing or mismatched `CODEX_THREAD_ID`. Native session binding
 requires Codex CLI 0.146.0 or newer; after upgrading, restart the Codex thread.
+
+Schema support proves request fields, not lifecycle delivery. For an existing
+pending collaboration route, `_pw.py observe <session_id>` checks the runtime's
+read-only parent/child journal evidence without spawning or accepting a manual
+completion claim. Missing journals or ambiguous identities retain the route.
