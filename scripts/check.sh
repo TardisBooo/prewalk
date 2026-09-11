@@ -23,7 +23,7 @@ for path in (
     Path("hosts/claude/presets.example.json"),
     Path("hosts/claude/settings.example.json"),
     Path("hosts/codex/.codex-plugin/plugin.json"),
-    Path("hosts/codex/hooks.json"),
+    Path("hosts/codex/hooks/hooks.json"),
 ):
     with path.open(encoding="utf-8") as handle:
         json.load(handle)
@@ -78,7 +78,9 @@ for skill in (tmp / "claude" / "skills").glob("*/SKILL.md"):
 assert (tmp / "claude" / "prewalk-presets.json").is_file()
 assert (tmp / "codex" / "prewalk-presets.toml").is_file()
 
-codex_hooks = json.loads((root / "hosts" / "codex" / "hooks.json").read_text(encoding="utf-8"))["hooks"]
+codex_hooks = json.loads(
+    (root / "hosts" / "codex" / "hooks" / "hooks.json").read_text(encoding="utf-8")
+)["hooks"]
 spawn_matcher = r"^((functions|collaboration)\.)?spawn_agent$"
 assert [group["matcher"] for group in codex_hooks["PreToolUse"]] == [spawn_matcher]
 assert spawn_matcher in [group["matcher"] for group in codex_hooks["PostToolUse"]]

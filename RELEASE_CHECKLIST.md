@@ -1,5 +1,11 @@
 # Release checklist
 
+## v1.0.4
+
+- [x] Codex discovers the manifest at `hooks/hooks.json`.
+- [ ] A disposable local Codex project completes a real Prewalk handoff.
+- [ ] Tag `v1.0.4` only after review.
+
 ## v1.0.3
 
 - [x] Legacy and current Codex spawn profiles pass strict route validation.

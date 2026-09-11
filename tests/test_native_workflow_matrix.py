@@ -87,14 +87,14 @@ class NativeWorkflowMatrixTests(unittest.TestCase):
             "assert_plugin_version",
             "prepare_upgrade_fixture",
             "0.3.1",
-            "1.0.3",
+            "1.0.4",
             "PREWALK_REQUIRE_NATIVE_CLIS",
         ):
             self.assertIn(required, script)
         self.assertNotIn("SKIP native contracts: covered", script)
 
     def test_codex_hooks_have_native_windows_commands(self) -> None:
-        hooks = json.loads((ROOT / "hosts" / "codex" / "hooks.json").read_text(encoding="utf-8"))[
+        hooks = json.loads((ROOT / "hosts" / "codex" / "hooks" / "hooks.json").read_text(encoding="utf-8"))[
             "hooks"
         ]
         commands = [

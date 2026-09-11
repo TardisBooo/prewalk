@@ -1,5 +1,11 @@
 # Migrating from Prewalk 0.3.x to 1.0.0
 
+## Upgrading from 1.0.3 to 1.0.4
+
+Prewalk 1.0.4 moves the Codex hook manifest to the runtime-discovered
+`hooks/hooks.json` path. Restart Codex after updating. Checkpoints remain
+compatible.
+
 ## Upgrading from 1.0.2 to 1.0.3
 
 Prewalk 1.0.3 supports Codex runtimes that expose `fork_context` instead of

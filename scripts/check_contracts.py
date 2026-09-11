@@ -145,7 +145,9 @@ def validate_repo(root: Path) -> None:
                 f"{event} must bind only the executor's native lifecycle names: {matchers}"
             )
 
-    codex_hooks = json.loads((root / "hosts" / "codex" / "hooks.json").read_text(encoding="utf-8"))["hooks"]
+    codex_hooks = json.loads(
+        (root / "hosts" / "codex" / "hooks" / "hooks.json").read_text(encoding="utf-8")
+    )["hooks"]
     spawn_matcher = r"^(((functions|collaboration)\.)?spawn_agent|multi_agent_v[0-9]+__spawn_agent)$"
     if [group.get("matcher") for group in codex_hooks.get("PreToolUse", [])] != [spawn_matcher]:
         raise ContractError("Codex PreToolUse must validate only native spawn_agent calls")

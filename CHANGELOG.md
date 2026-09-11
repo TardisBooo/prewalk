@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.4
+
+- Place the Codex hook manifest at the runtime-discovered
+  `hooks/hooks.json` location. Earlier releases shipped it at the plugin root,
+  so skills loaded but lifecycle hooks were never registered.
+
 ## 1.0.3
 
 - Support both Codex spawn schemas: legacy `task_name`/`fork_turns` and the
