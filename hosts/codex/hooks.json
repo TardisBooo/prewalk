@@ -14,7 +14,7 @@
     ],
     "PreToolUse": [
       {
-        "matcher": "^((functions|collaboration)\\.)?spawn_agent$",
+        "matcher": "^(((functions|collaboration)\\.)?spawn_agent|multi_agent_v[0-9]+__spawn_agent)$",
         "hooks": [
           {
             "type": "command",
@@ -52,7 +52,7 @@
         ]
       },
       {
-        "matcher": "^((functions|collaboration)\\.)?spawn_agent$",
+        "matcher": "^(((functions|collaboration)\\.)?spawn_agent|multi_agent_v[0-9]+__spawn_agent)$",
         "hooks": [
           {
             "type": "command",

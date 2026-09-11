@@ -27,7 +27,9 @@ def _part(payload: dict, snake: str, camel: str):
 
 
 def _tool_name(payload: dict) -> str:
-    return str(payload.get("tool_name") or payload.get("toolName") or "").rsplit(".", 1)[-1]
+    raw = str(payload.get("tool_name") or payload.get("toolName") or "")
+    normalized = raw.rsplit(".", 1)[-1].lower()
+    return "spawn_agent" if normalized.endswith("__spawn_agent") else normalized
 
 
 def _find_agent_id(value: Any) -> str:

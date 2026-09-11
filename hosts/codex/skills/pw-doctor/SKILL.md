@@ -9,7 +9,7 @@ Inspect the live `spawn_agent` schema, then pass exactly the fields it exposes:
 
 ```bash
 python3 hooks/_arm.py doctor "${CODEX_THREAD_ID:-${CODEX_SESSION_ID:-}}" \
-  --schema-fields=task_name,message,fork_turns,model,reasoning_effort
+  --schema-fields=<comma-separated live field names>
 ```
 
 Omit absent fields and do not call the tool. A missing model argument means

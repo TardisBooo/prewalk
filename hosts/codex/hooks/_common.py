@@ -107,7 +107,8 @@ def _event_part(payload: dict, snake_name: str, camel_name: str):
 
 def _tool_name(payload: dict) -> str:
     raw = payload.get("tool_name") or payload.get("toolName") or payload.get("name") or ""
-    return str(raw).rsplit(".", 1)[-1].lower()
+    normalized = str(raw).rsplit(".", 1)[-1].lower()
+    return "spawn_agent" if normalized.endswith("__spawn_agent") else normalized
 
 
 # --- Todo normalization ---------------------------------------------------------

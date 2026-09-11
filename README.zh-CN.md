@@ -82,7 +82,7 @@ executor: 继承轨迹（或结构化 packet）-> 完成剩余任务 -> 验证 -
 
 ### 1. 轨迹继承交接 —— 默认路由
 
-Codex 的 `spawn_agent` 支持 `fork_turns`，executor 可以从 planner 的上下文起步，
+Codex 的 `spawn_agent` 可能提供 `fork_turns` 或等价的布尔字段 `fork_context`，executor 可以从 planner 的上下文起步，
 而不是从一份文档起步：
 
 - **`fork_turns: "all"`（默认）**：executor 继承 planner 的全部回合轨迹。探索过程、
@@ -150,7 +150,7 @@ agent ID —— 无关、嵌套、并发的子代理事件一律忽略。超时�
 ### 6. 能力探测 fail-closed
 
 `pw-go` 在铸造路由前探测宿主的真实能力：Codex 侧检查 live `spawn_agent` schema 是否
-含 `model` / `fork_turns` / `reasoning_effort`（缺必需项则保留检查点、拒绝放行）；
+含 `model`、实时 fork 控制字段与 `reasoning_effort`（缺必需项则保留检查点、拒绝放行）；
 Claude 侧用 PreToolUse 改写保证受限 executor 类型与模型，检测到
 `CLAUDE_CODE_SUBAGENT_MODEL` 冲突时拒绝 arm（`override-conflict`）。
 `require_model_routing = true` 时，绝不在未能证明的路由上 spawn。

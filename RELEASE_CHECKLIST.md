@@ -1,5 +1,12 @@
 # Release checklist
 
+## v1.0.3
+
+- [x] Legacy and current Codex spawn profiles pass strict route validation.
+- [x] Versioned `multi_agent_v1__spawn_agent` hooks bind the exact executor.
+- [ ] A disposable local Codex project completes a real Prewalk handoff.
+- [ ] Tag `v1.0.3` only after review.
+
 ## v1.0.2
 
 - [x] Every Codex hook has a `PLUGIN_ROOT`-based `commandWindows` entry.

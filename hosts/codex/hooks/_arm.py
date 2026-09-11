@@ -212,7 +212,7 @@ def cmd_doctor(given_session_id: str, rest: list[str]) -> int:
         failures += 0 if ok else 1
 
     check(sys.version_info >= (3, 10), "Python", sys.version.split()[0])
-    check(core.VERSION == "1.0.2", "shared core", core.VERSION)
+    check(core.VERSION == "1.0.3", "shared core", core.VERSION)
     version, version_text = _codex_version()
     check(
         version is not None and version >= MIN_CODEX_VERSION,
@@ -247,7 +247,7 @@ def cmd_doctor(given_session_id: str, rest: list[str]) -> int:
     try:
         hooks = json.loads(manifest.read_text(encoding="utf-8"))["hooks"]
         required_events = {"PreToolUse", "PostToolUse", "SubagentStop", "Stop"}
-        spawn_matcher = r"^((functions|collaboration)\.)?spawn_agent$"
+        spawn_matcher = r"^(((functions|collaboration)\.)?spawn_agent|multi_agent_v[0-9]+__spawn_agent)$"
         manifest_ok = (
             required_events.issubset(hooks)
             and [group.get("matcher") for group in hooks["PreToolUse"]] == [spawn_matcher]

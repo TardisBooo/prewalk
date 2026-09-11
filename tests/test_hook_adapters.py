@@ -281,6 +281,10 @@ class HookAdapterTests(unittest.TestCase):
                 self.assertEqual(self.codex.store_file(), expected)
                 self.assertEqual(self.claude.store_file(), expected)
 
+    def test_codex_normalizes_versioned_multi_agent_spawn_name(self) -> None:
+        payload = {"tool_name": "multi_agent_v1__spawn_agent"}
+        self.assertEqual(self.codex._tool_name(payload), "spawn_agent")
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -210,6 +210,45 @@ class EndToEndFlowTests(unittest.TestCase):
         status = self.run_script("codex", "_arm.py", "status", session_id)
         self.assertIn("idle", status.stdout)
 
+    def test_codex_current_multi_agent_schema_completes_a_full_handoff(self) -> None:
+        session_id = "codex-current-schema"
+        self.arm_codex_checkpoint(session_id)
+        handoff = self.run_script(
+            "codex", "_pw.py", "go", session_id,
+            "--schema-fields=fork_context,items,message,model,reasoning_effort",
+        )
+        fields = dict(re.findall(r"^PREWALK_([A-Z_]+): (.+)$", handoff.stdout, re.M))
+        message = re.search(
+            r"PREWALK_MESSAGE_BEGIN\n(.*)\nPREWALK_MESSAGE_END", handoff.stdout, re.S
+        ).group(1)
+        self.assertEqual(fields["SPAWN_PROFILE"], "fork_context")
+        self.assertEqual(fields["FORK_CONTEXT"], "true")
+        self.assertNotIn("TASK_NAME", fields)
+        tool_input = {
+            "fork_context": True,
+            "message": message,
+            "model": fields["EXECUTOR_MODEL"],
+        }
+        if "EXECUTOR_EFFORT" in fields:
+            tool_input["reasoning_effort"] = fields["EXECUTOR_EFFORT"]
+        accepted = self.run_script("codex", "executor_router.py", payload={
+            "session_id": session_id,
+            "hook_event_name": "PreToolUse",
+            "tool_name": "multi_agent_v1__spawn_agent",
+            "tool_use_id": "spawn-current",
+            "tool_input": tool_input,
+        })
+        self.assertEqual(accepted.stdout, "")
+        self.run_script("codex", "executor_router.py", payload={
+            "session_id": session_id,
+            "hook_event_name": "PostToolUse",
+            "tool_name": "multi_agent_v1__spawn_agent",
+            "tool_use_id": "spawn-current",
+            "tool_response": {"agent_id": "agent-current", "success": True},
+        })
+        running = self.run_script("codex", "_arm.py", "status", session_id)
+        self.assertIn("executor_running", running.stdout)
+
     def test_codex_stop_recovers_checklist_when_plan_tool_is_absent(self) -> None:
         session_id = "codex-packet-todos"
         self.run_script("codex", "_arm.py", "arm", session_id, "Build the feature")

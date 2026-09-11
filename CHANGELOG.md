@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.0.3
+
+- Support both Codex spawn schemas: legacy `task_name`/`fork_turns` and the
+  current `multi_agent_v1__spawn_agent` `fork_context` shape.
+- Validate the exact route token, message, model, effort, and fork behavior for
+  either profile, and match versioned multi-agent hook tool names.
+- Make `pw-go`, `pw-retry`, and `pw-doctor` derive their route from the live
+  schema instead of documenting one fixed field set.
+
 ## 1.0.2
 
 - Register native `commandWindows` entries for every Codex hook so Stop,

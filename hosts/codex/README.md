@@ -38,9 +38,9 @@ inspects the live `spawn_agent` schema before creating a one-time route:
 
 ```text
 durable Stop checkpoint -> handoff_requested
-  -> schema has model + fork_turns controls
+  -> schema has model + fork_turns or fork_context controls
      -> token-bound PreToolUse validation
-     -> spawn once with the preset's fork_turns (default "all")
+     -> spawn once with the preset's fork behavior (default "all")
      -> PostToolUse binds returned agent_id -> executor_running
   -> required model control is absent
      -> retain checkpoint without spawning

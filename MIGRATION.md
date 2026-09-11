@@ -1,5 +1,12 @@
 # Migrating from Prewalk 0.3.x to 1.0.0
 
+## Upgrading from 1.0.2 to 1.0.3
+
+Prewalk 1.0.3 supports Codex runtimes that expose `fork_context` instead of
+`task_name` and `fork_turns`. Existing v4 checkpoints remain compatible.
+Restart Codex after updating so the expanded versioned tool-name hook matcher
+is active.
+
 ## Upgrading from 1.0.1 to 1.0.2
 
 Prewalk 1.0.2 adds the missing native Windows hook commands. Windows users must

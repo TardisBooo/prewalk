@@ -35,15 +35,20 @@ def _schema_fields(arguments: list[str]) -> set[str]:
     return fields
 
 
-def _print_route(result: core.V4CheckpointResult) -> None:
+def _print_route(result: core.V4CheckpointResult, schema_fields: set[str]) -> None:
     """Emit the route envelope, or the plain message when nothing is live."""
     if result.state is not None and result.status == "handoff_requested":
         state = result.state
-        print(f"PREWALK_TASK_NAME: {state.route_task_name}")
+        if "fork_context" in schema_fields:
+            print("PREWALK_SPAWN_PROFILE: fork_context")
+            print(f"PREWALK_FORK_CONTEXT: {str(state.fork_turns == 'all').lower()}")
+        else:
+            print("PREWALK_SPAWN_PROFILE: task_name")
+            print(f"PREWALK_TASK_NAME: {state.route_task_name}")
+            print(f"PREWALK_FORK_TURNS: {state.fork_turns}")
         print(f"PREWALK_EXECUTOR_MODEL: {state.executor_model}")
         if state.effort_routing_proven:
             print(f"PREWALK_EXECUTOR_EFFORT: {state.executor_effort}")
-        print(f"PREWALK_FORK_TURNS: {state.fork_turns}")
         print("PREWALK_MESSAGE_BEGIN")
         print(result.message)
         print("PREWALK_MESSAGE_END")
@@ -67,19 +72,21 @@ def main() -> int:
     store = _common.store_file()
 
     if sub == "go":
+        fields = _schema_fields(sys.argv[3:])
         result = core.request_codex_handoff(
-            store, session_id, schema_fields=_schema_fields(sys.argv[3:])
+            store, session_id, schema_fields=fields
         )
-        _print_route(result)
+        _print_route(result, fields)
         return 0
 
     if sub == "retry":
+        fields = _schema_fields(sys.argv[3:])
         prepared = core.prepare_v4_retry(store, session_id)
         if prepared.status in ("checkpoint_ready", "handoff_requested"):
             prepared = core.request_codex_handoff(
-                store, session_id, schema_fields=_schema_fields(sys.argv[3:])
+                store, session_id, schema_fields=fields
             )
-        _print_route(prepared)
+        _print_route(prepared, fields)
         return 0
 
     if sub == "reconcile":

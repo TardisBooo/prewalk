@@ -213,12 +213,13 @@ def request_codex_handoff(
             + "\nPrewalk retained the checkpoint; do not spawn an unpinned executor.",
             state,
         )
-    required = {"task_name", "message", "fork_turns"}
-    missing = sorted(required - fields)
-    if missing:
+    legacy_schema = {"task_name", "message", "fork_turns"}.issubset(fields)
+    fork_context_schema = {"message", "fork_context"}.issubset(fields)
+    if not legacy_schema and not fork_context_schema:
         return V4CheckpointResult(
             "unsupported_route",
-            "The live spawn_agent schema is missing required fields: " + ", ".join(missing),
+            "The live spawn_agent schema must expose message plus either "
+            "task_name/fork_turns or fork_context.",
             state,
         )
 
@@ -600,12 +601,19 @@ def validate_codex_spawn(
 
     errors: list[str] = []
     expected_message = codex_route_message(state)
-    if str(tool_input.get("task_name") or "") != state.route_task_name:
-        errors.append("task_name does not match the pending Prewalk route")
     if str(tool_input.get("message") or "") != expected_message:
         errors.append("message is not the exact persisted Prewalk route message")
-    if tool_input.get("fork_turns") != state.fork_turns:
-        errors.append(f'fork_turns must be "{state.fork_turns}"')
+    if "fork_context" in tool_input:
+        expected_fork_context = state.fork_turns == "all"
+        if tool_input.get("fork_context") is not expected_fork_context:
+            errors.append(f"fork_context must be {str(expected_fork_context).lower()}")
+        if "task_name" in tool_input or "fork_turns" in tool_input:
+            errors.append("fork_context schema must not include task_name or fork_turns")
+    else:
+        if str(tool_input.get("task_name") or "") != state.route_task_name:
+            errors.append("task_name does not match the pending Prewalk route")
+        if tool_input.get("fork_turns") != state.fork_turns:
+            errors.append(f'fork_turns must be "{state.fork_turns}"')
     if state.model_routing_proven and tool_input.get("model") != state.executor_model:
         errors.append("model does not match the configured executor")
     if state.require_model_routing and not state.model_routing_proven:

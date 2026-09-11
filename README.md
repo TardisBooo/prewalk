@@ -88,8 +88,8 @@ The rest of this page describes how to use it and what we adapted for these two 
 
 ### 1. Trajectory-inheritance handoff — the default route
 
-Codex's `spawn_agent` accepts `fork_turns`, so the executor can start from the planner's
-context instead of a document:
+Codex may expose `fork_turns` or the equivalent boolean `fork_context`, so the executor can
+start from the planner's context instead of a document:
 
 - **`fork_turns: "all"` (default)** — the executor inherits the planner's full turn history.
   The exploration, the todo list, and the already-verified first edit are in its context, and
@@ -163,8 +163,8 @@ proof that the bound agent is no longer live.
 ### 6. Fail-closed capability probing
 
 `pw-go` probes the host's live capability before minting a route: on Codex it checks the live
-`spawn_agent` schema for `model` / `fork_turns` / `reasoning_effort` (a missing required field
-keeps the checkpoint and refuses the route); on Claude Code a PreToolUse rewrite guarantees
+`spawn_agent` schema for `model`, its live fork control, and `reasoning_effort` (a missing
+required field keeps the checkpoint and refuses the route); on Claude Code a PreToolUse rewrite guarantees
 the scoped executor type and model, and a conflicting `CLAUDE_CODE_SUBAGENT_MODEL` refuses the
 arm (`override-conflict`). With `require_model_routing = true`, prewalk never spawns on a
 route it could not prove.

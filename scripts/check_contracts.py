@@ -146,7 +146,7 @@ def validate_repo(root: Path) -> None:
             )
 
     codex_hooks = json.loads((root / "hosts" / "codex" / "hooks.json").read_text(encoding="utf-8"))["hooks"]
-    spawn_matcher = r"^((functions|collaboration)\.)?spawn_agent$"
+    spawn_matcher = r"^(((functions|collaboration)\.)?spawn_agent|multi_agent_v[0-9]+__spawn_agent)$"
     if [group.get("matcher") for group in codex_hooks.get("PreToolUse", [])] != [spawn_matcher]:
         raise ContractError("Codex PreToolUse must validate only native spawn_agent calls")
     post_matchers = [group.get("matcher") for group in codex_hooks.get("PostToolUse", [])]
@@ -174,20 +174,6 @@ def validate_repo(root: Path) -> None:
                 raise ContractError("every Codex PostToolUse hook needs a Windows command")
     if (root / "hosts" / "codex" / "agents" / "prewalk-executor.toml").exists():
         raise ContractError("Codex executor must be supplied by the native route, not an unused TOML")
-
-    # --- No obsolete spawn field anywhere in runtime code -----------------------
-    obsolete_spawn_field = "fork_" + "context"
-    runtime_roots = [root / "hosts" / "codex", root / "tests"]
-    for base in runtime_roots:
-        for path in base.rglob("*"):
-            if path.is_file() and "__pycache__" not in path.parts:
-                try:
-                    text = path.read_text(encoding="utf-8")
-                except UnicodeDecodeError:
-                    continue
-                if obsolete_spawn_field in text:
-                    raise ContractError(f"{path}: obsolete Codex spawn field")
-
 
 def main() -> int:
     root = Path(__file__).resolve().parents[1]

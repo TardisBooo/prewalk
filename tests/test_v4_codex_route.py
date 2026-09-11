@@ -79,6 +79,21 @@ class V4CodexRouteTests(unittest.TestCase):
             "reasoning_effort": state.executor_effort,
         }
 
+    def request_fork_context(self) -> core.V4CheckpointResult:
+        return core.request_codex_handoff(
+            self.store,
+            self.session_id,
+            schema_fields={"fork_context", "items", "message", "model", "reasoning_effort"},
+        )
+
+    def exact_fork_context_input(self, state: core.V4State) -> dict:
+        return {
+            "fork_context": True,
+            "message": core.codex_route_message(state),
+            "model": state.executor_model,
+            "reasoning_effort": state.executor_effort,
+        }
+
     def test_live_schema_must_prove_required_model_without_consuming_checkpoint(self) -> None:
         result = core.request_codex_handoff(
             self.store,
@@ -118,6 +133,29 @@ class V4CodexRouteTests(unittest.TestCase):
         )
         self.assertEqual(packet_mode.status, "handoff_requested")
         self.assertIn(PACKET, packet_mode.message)
+
+    def test_current_fork_context_schema_routes_and_validates_exactly(self) -> None:
+        result = self.request_fork_context()
+        self.assertEqual(result.status, "handoff_requested")
+        state = result.state
+        accepted = core.validate_codex_spawn(
+            self.store,
+            self.session_id,
+            self.exact_fork_context_input(state),
+            tool_use_id="tool-current",
+        )
+        self.assertTrue(accepted.allowed)
+        self.assertEqual(accepted.state.route_tool_use_id, "tool-current")
+
+    def test_current_schema_rejects_wrong_fork_context(self) -> None:
+        state = self.request_fork_context().state
+        malformed = self.exact_fork_context_input(state)
+        malformed["fork_context"] = False
+        decision = core.validate_codex_spawn(
+            self.store, self.session_id, malformed, tool_use_id="tool-wrong-fork"
+        )
+        self.assertFalse(decision.allowed)
+        self.assertIn("fork_context must be true", decision.message)
 
     def test_malformed_intended_spawn_is_denied_and_becomes_retryable(self) -> None:
         state = self.request().state
