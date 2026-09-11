@@ -40,6 +40,11 @@ from .records import (
 )
 from .store import clear_state, utc_timestamp
 
+
+def _safe_task_suffix(token: str) -> str:
+    """Return a stable Codex task-name fragment accepted by strict schemas."""
+    return re.sub(r"[^a-z0-9_]", "_", token.lower())[:8]
+
 CODEX_EXECUTOR_INSTRUCTIONS = (
     "Continue only the remaining todos from the persisted packet. Do not repeat task #1 or restart "
     "planning. Mark one todo in progress at a time, run its stated verification, and finish with "
@@ -129,7 +134,7 @@ def request_claude_handoff(
         now=timestamp,
         updates={
             "route_token": token,
-            "route_task_name": f"prewalk_executor_{attempt}_{token[:8]}",
+            "route_task_name": f"prewalk_executor_{attempt}_{_safe_task_suffix(token)}",
             "route_attempt": attempt,
             "route_requested_at": timestamp,
             "model_routing_proven": True,
@@ -219,7 +224,7 @@ def request_codex_handoff(
 
     token = secrets.token_urlsafe(24)
     attempt = state.route_attempt + 1
-    task_name = f"prewalk_executor_{attempt}_{token[:8]}"
+    task_name = f"prewalk_executor_{attempt}_{_safe_task_suffix(token)}"
     timestamp = utc_timestamp()
     requested = apply_v4_transition(
         store_file,
@@ -277,7 +282,7 @@ def resume_codex_manual(
         now=timestamp,
         updates={
             "route_token": token,
-            "route_task_name": f"manual_root_{token[:8]}",
+            "route_task_name": f"manual_root_{_safe_task_suffix(token)}",
             "route_attempt": state.route_attempt + 1,
             "route_requested_at": timestamp,
             "executor_agent_id": f"manual-root:{root_session_id}",

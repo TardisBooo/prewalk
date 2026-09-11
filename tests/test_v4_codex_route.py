@@ -117,6 +117,7 @@ class V4CodexRouteTests(unittest.TestCase):
         self.assertIn(PACKET, result.message)
         self.assertEqual(result.message, core.codex_route_message(state))
         self.assertIn(state.route_token, result.message)
+        self.assertRegex(state.route_task_name, r"^[a-z0-9_]+$")
 
         core.clear_state(self.store, self.session_id)
         self.arm_checkpoint()

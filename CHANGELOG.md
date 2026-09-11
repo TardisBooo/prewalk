@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.9
+
+- Normalize token-derived Codex task names to lowercase schema-safe characters.
+
 ## 1.0.8
 
 - Route pinned executors with fresh context on both legacy `fork_turns` and

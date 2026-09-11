@@ -1,5 +1,10 @@
 # Migrating from Prewalk 0.3.x to 1.0.0
 
+## Upgrading from 1.0.8 to 1.0.9
+
+Prewalk 1.0.9 only changes newly minted Codex task names; existing incomplete
+routes remain retryable and require no state migration.
+
 ## Upgrading from 1.0.7 to 1.0.8
 
 Prewalk 1.0.8 maps model-pinned routes to fresh-context spawns on both Codex
