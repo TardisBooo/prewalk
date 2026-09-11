@@ -1,5 +1,11 @@
 # Migrating from Prewalk 0.3.x to 1.0.0
 
+## Upgrading from 1.0.1 to 1.0.2
+
+Prewalk 1.0.2 adds the missing native Windows hook commands. Windows users must
+restart Codex after updating so resumed and new threads load the repaired Stop
+and executor lifecycle hooks. The v4 state schema is unchanged.
+
 ## Upgrading from 1.0.0 to 1.0.1
 
 Prewalk 1.0.1 keeps the v4 state schema unchanged. Restart the host after

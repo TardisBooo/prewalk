@@ -87,11 +87,28 @@ class NativeWorkflowMatrixTests(unittest.TestCase):
             "assert_plugin_version",
             "prepare_upgrade_fixture",
             "0.3.1",
-            "1.0.1",
+            "1.0.2",
             "PREWALK_REQUIRE_NATIVE_CLIS",
         ):
             self.assertIn(required, script)
         self.assertNotIn("SKIP native contracts: covered", script)
+
+    def test_codex_hooks_have_native_windows_commands(self) -> None:
+        hooks = json.loads((ROOT / "hosts" / "codex" / "hooks.json").read_text(encoding="utf-8"))[
+            "hooks"
+        ]
+        commands = [
+            hook["commandWindows"]
+            for groups in hooks.values()
+            for group in groups
+            for hook in group["hooks"]
+        ]
+        self.assertEqual(len(commands), 6)
+        self.assertTrue(all("$env:PLUGIN_ROOT" in command for command in commands))
+        self.assertTrue(any("pause_detect.py" in command for command in commands))
+        self.assertTrue(any("todo_tracker.py" in command for command in commands))
+        self.assertTrue(any("edit_tracker.py" in command for command in commands))
+        self.assertEqual(sum("executor_router.py" in command for command in commands), 3)
 
 
 if __name__ == "__main__":

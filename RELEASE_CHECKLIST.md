@@ -1,5 +1,12 @@
 # Release checklist
 
+## v1.0.2
+
+- [x] Every Codex hook has a `PLUGIN_ROOT`-based `commandWindows` entry.
+- [x] Static contracts and the Windows hook manifest regression test pass.
+- [x] A real USStockDeck Handoff Packet is accepted by the installed Stop hook.
+- [ ] Tag `v1.0.2` only after review.
+
 ## v1.0.1
 
 - [x] Targeted regression tests cover state permissions, Windows CLI shims,

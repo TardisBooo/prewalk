@@ -154,6 +154,24 @@ def validate_repo(root: Path) -> None:
         raise ContractError("Codex PostToolUse must bind native spawn_agent results")
     if len(codex_hooks.get("SubagentStop", [])) != 1:
         raise ContractError("Codex must register exactly one SubagentStop lifecycle hook")
+    expected_windows_hooks = {
+        "Stop": "pause_detect.py",
+        "PreToolUse": "executor_router.py",
+        "SubagentStop": "executor_router.py",
+    }
+    for event, script in expected_windows_hooks.items():
+        for group in codex_hooks.get(event, []):
+            for hook in group.get("hooks", []):
+                command = hook.get("commandWindows", "")
+                if script not in command or "$env:PLUGIN_ROOT" not in command:
+                    raise ContractError(
+                        f"Codex {event} must register a PLUGIN_ROOT Windows command for {script}"
+                    )
+    for group in codex_hooks.get("PostToolUse", []):
+        for hook in group.get("hooks", []):
+            command = hook.get("commandWindows", "")
+            if not command or "$env:PLUGIN_ROOT" not in command:
+                raise ContractError("every Codex PostToolUse hook needs a Windows command")
     if (root / "hosts" / "codex" / "agents" / "prewalk-executor.toml").exists():
         raise ContractError("Codex executor must be supplied by the native route, not an unused TOML")
 

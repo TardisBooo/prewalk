@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.2
+
+- Register native `commandWindows` entries for every Codex hook so Stop,
+  mutation tracking, and executor routing actually run on Windows.
+- Add a static contract and manifest regression test for the Windows hook
+  commands.
+
 ## 1.0.1
 
 - Make the state-file location explicitly configurable with
