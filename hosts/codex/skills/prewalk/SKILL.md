@@ -25,7 +25,8 @@ Prewalk never changes it.
 ## Frontier protocol
 
 0. If the task clearly fits in one or two small edits, complete and verify it
-   directly without creating a Prewalk plan.
+   directly without creating a Prewalk plan, then explicitly disarm with
+   `pw-off`. An ordinary final reply never implicitly clears an armed run.
 1. Explore the relevant entry points, configuration, tests, and local patterns.
 2. Create a tight todo list (at most the configured cap). Use the live plan/todo
    tool when one exists. Every item includes a concrete file/path action and a

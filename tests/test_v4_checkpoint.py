@@ -152,6 +152,22 @@ print(json.dumps({"status": result.status, "message": result.message, "packet": 
         self.assertEqual(result.status, "missing_todos")
         self.assertEqual(self.load().phase, core.V4_PLANNING)
 
+    def test_missing_packet_and_failed_go_reply_preserve_planning(self) -> None:
+        for packet in ("", "Prewalk is still planning; no checkpoint ready; executor not started."):
+            result = core.capture_v4_checkpoint(self.store, self.session_id, packet=packet)
+            self.assertEqual(result.status, "awaiting_packet")
+            self.assertEqual(self.load().phase, core.V4_PLANNING)
+
+    def test_rejection_reason_survives_retry_exhaustion_and_clears_on_success(self) -> None:
+        for _ in range(core.V4_CHECKPOINT_RETRY_LIMIT):
+            core.note_v4_checkpoint_reject(self.store, self.session_id, reason="fixture rejection")
+        self.assertEqual(self.load().last_error, "fixture rejection")
+        core.capture_v4_checkpoint(self.store, self.session_id, packet="Not ready.")
+        self.assertEqual(self.load().last_error, "fixture rejection")
+        result = core.capture_v4_checkpoint(self.store, self.session_id, packet=PACKET_TODO_SNAPSHOT)
+        self.assertEqual(result.status, "checkpoint_ready")
+        self.assertEqual(self.load().last_error, "")
+
     def test_explicit_verification_warning_is_not_reported_as_evidence(self) -> None:
         packet = PACKET.replace(
             "- python3 -m unittest tests.test_v4_checkpoint: passed",

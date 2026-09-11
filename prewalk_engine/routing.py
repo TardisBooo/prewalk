@@ -188,7 +188,8 @@ def request_codex_handoff(
         )
     if state.phase != "checkpoint_ready":
         return V4CheckpointResult(
-            "not_ready", f"Prewalk has no checkpoint ready for Codex routing ({state.phase}).", state
+            "not_ready", f"Prewalk has no checkpoint ready for Codex routing ({state.phase})."
+            + (f" Last checkpoint error: {state.last_error}" if state.last_error else ""), state
         )
     if state.handoff_mode == "manual-model":
         return V4CheckpointResult(

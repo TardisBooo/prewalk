@@ -4,8 +4,8 @@ The root ``Stop`` event is the only place where ``planning`` may become
 ``checkpoint_ready``. :func:`capture_v4_checkpoint` decides that question in
 one pass:
 
-* trivial work (no plan) and nearly-done plans (0/1 items left) are finished
-  in the root session instead — a handoff there would cost more than it saves;
+* missing packets retain the planning run; absence of a plan is not proof
+  of completion. Nearly-done plans (0/1 items left) finish in the root;
 * todo-shape violations and missing packet headings are *rejections*: the
   caller counts them (:func:`note_v4_checkpoint_reject`) and blocks the Stop
   so the planner can repair its checkpoint in the same turn;
@@ -37,6 +37,7 @@ from .protocol import (
 )
 from .records import (
     V4CheckpointResult,
+    V4StateError,
     _v4_content_event_id,
     apply_v4_transition,
     load_v4_state,
@@ -163,8 +164,9 @@ def capture_v4_checkpoint(
     Statuses the adapter should treat as *rejections* (block the Stop, let the
     planner repair): ``missing_todos`` (packet started but no snapshot),
     ``invalid_todos``, ``incomplete_task_one``, ``invalid_packet``,
-    ``missing_evidence``. Statuses that *finish in the root*: ``trivial``,
-    ``complete``, ``one_remaining``. Success is ``checkpoint_ready``.
+    ``missing_evidence``. ``awaiting_packet`` preserves the run without
+    blocking Stop. ``complete`` and ``one_remaining`` finish in the root.
+    Success is ``checkpoint_ready``.
     """
     loaded = load_v4_state(store_file, root_session_id)
     state = loaded.state
@@ -181,17 +183,18 @@ def capture_v4_checkpoint(
     if not snapshot:
         snapshot = packet_todos(packet)
     if not snapshot:
-        # No plan exists. If the message *looks* like a packet, the planner
-        # skipped the todo protocol — reject; otherwise the task was trivial
-        # and the root session simply finishes it.
+        # A malformed packet is rejected. An ordinary reply (including a
+        # failed pw-go response) is not evidence that work is complete.
         if packet.strip() and len(missing_packet_headings(packet)) < len(V4_PACKET_HEADINGS):
             return V4CheckpointResult(
                 "missing_todos",
                 "Prewalk cannot capture a handoff packet without a complete real todo snapshot.",
             )
-        clear_state(store_file, root_session_id)
         return V4CheckpointResult(
-            "trivial", "prewalk: trivial task; no handoff checkpoint was created."
+            "awaiting_packet",
+            "Prewalk planning state retained: no checkpoint packet was supplied. "
+            "Emit the structured handoff packet, or use pw-off to explicitly end the run.",
+            state,
         )
     if any(todo.is_pause for todo in snapshot):
         return V4CheckpointResult(
@@ -241,6 +244,7 @@ def capture_v4_checkpoint(
                 "verification_evidence": evidence,
                 "verification_warning": warning,
                 "checkpoint_at": timestamp,
+                "last_error": "",
             },
         )
     except V4StateError as exc:
@@ -275,7 +279,7 @@ def note_v4_checkpoint_reject(
         event_id=_v4_content_event_id(
             "checkpoint-reject", root_session_id, state.checkpoint_rejects + 1, reason
         ),
-        updates={"checkpoint_rejects": state.checkpoint_rejects + 1},
+        updates={"checkpoint_rejects": state.checkpoint_rejects + 1, "last_error": reason},
     )
     return counted.checkpoint_rejects, counted.checkpoint_rejects < V4_CHECKPOINT_RETRY_LIMIT
 

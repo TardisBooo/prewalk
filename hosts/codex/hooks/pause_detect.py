@@ -14,6 +14,8 @@ Two jobs, in order:
 
 from __future__ import annotations
 
+import hashlib
+
 import _engine  # noqa: F401  (locates prewalk_engine — must precede the import below)
 import _common  # type: ignore[import-not-found]
 import prewalk_engine as core  # noqa: E402
@@ -83,7 +85,13 @@ def main() -> int:
             # A malformed checkpoint is recoverable: block the Stop with the
             # reason so the planner emits a corrected packet (bounded retries),
             # instead of dying with a user-only system message.
-            count, retry = core.note_v4_checkpoint_reject(store, sid, reason=result.message)
+            loaded = core.load_v4_state(store, sid)
+            source = "event" if todos else "state" if loaded.state and loaded.state.todos else "packet"
+            diagnostic = (
+                f"{result.message} [source={source}; packet_chars={len(packet)}; "
+                f"packet_sha256={hashlib.sha256(packet.encode('utf-8')).hexdigest()}]"
+            )
+            count, retry = core.note_v4_checkpoint_reject(store, sid, reason=diagnostic)
             if retry:
                 _common.emit(core.HookAction(
                     proceed=False,

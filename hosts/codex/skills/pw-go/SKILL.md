@@ -16,7 +16,9 @@ python3 hooks/_pw.py go "${CODEX_THREAD_ID:-${CODEX_SESSION_ID:-}}" \
 Omit any field name that is absent from the live schema. Do not claim support
 from a preset or documentation; only the current tool schema is proof.
 
-If no active checkpoint exists, report that in one line and stop.
+If no active checkpoint exists, report the helper's phase and last checkpoint
+error and stop. Do not disarm or label the task trivial. A planning run stays
+recoverable until a valid packet is captured or the user explicitly ends it.
 
 ## Native spawn path
 
