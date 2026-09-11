@@ -165,14 +165,14 @@ def validate_repo(root: Path) -> None:
         for group in codex_hooks.get(event, []):
             for hook in group.get("hooks", []):
                 command = hook.get("commandWindows", "")
-                if script not in command or "%PLUGIN_ROOT%" not in command:
+                if script not in command or "${PLUGIN_ROOT}" not in command:
                     raise ContractError(
                         f"Codex {event} must register a PLUGIN_ROOT Windows command for {script}"
                     )
     for group in codex_hooks.get("PostToolUse", []):
         for hook in group.get("hooks", []):
             command = hook.get("commandWindows", "")
-            if not command or "%PLUGIN_ROOT%" not in command:
+            if not command or "${PLUGIN_ROOT}" not in command:
                 raise ContractError("every Codex PostToolUse hook needs a Windows command")
     if (root / "hosts" / "codex" / "agents" / "prewalk-executor.toml").exists():
         raise ContractError("Codex executor must be supplied by the native route, not an unused TOML")

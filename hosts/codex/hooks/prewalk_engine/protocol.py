@@ -24,7 +24,7 @@ from typing import Iterable
 
 # --- Release identity -------------------------------------------------------
 
-VERSION = "1.0.5"
+VERSION = "1.0.6"
 
 # --- Tuning defaults --------------------------------------------------------
 

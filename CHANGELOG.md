@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.6
+
+- Use Codex's load-time `${PLUGIN_ROOT}` placeholder in Windows hook commands;
+  `%PLUGIN_ROOT%` is not expanded by the hook runner.
+
 ## 1.0.5
 
 - Fix Codex hooks on Windows by using native `cmd.exe` syntax in

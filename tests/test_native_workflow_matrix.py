@@ -87,7 +87,7 @@ class NativeWorkflowMatrixTests(unittest.TestCase):
             "assert_plugin_version",
             "prepare_upgrade_fixture",
             "0.3.1",
-            "1.0.5",
+            "1.0.6",
             "PREWALK_REQUIRE_NATIVE_CLIS",
         ):
             self.assertIn(required, script)
@@ -104,7 +104,7 @@ class NativeWorkflowMatrixTests(unittest.TestCase):
             for hook in group["hooks"]
         ]
         self.assertEqual(len(commands), 6)
-        self.assertTrue(all("%PLUGIN_ROOT%" in command for command in commands))
+        self.assertTrue(all("${PLUGIN_ROOT}" in command for command in commands))
         self.assertTrue(all("$env:" not in command and not command.startswith("& ") for command in commands))
         self.assertTrue(any("pause_detect.py" in command for command in commands))
         self.assertTrue(any("todo_tracker.py" in command for command in commands))

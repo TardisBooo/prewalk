@@ -1,5 +1,10 @@
 # Migrating from Prewalk 0.3.x to 1.0.0
 
+## Upgrading from 1.0.5 to 1.0.6
+
+Prewalk 1.0.6 uses Codex's `${PLUGIN_ROOT}` hook placeholder. Reinstall the
+plugin so the host resolves absolute adapter paths before invoking `cmd.exe`.
+
 ## Upgrading from 1.0.4 to 1.0.5
 
 Prewalk 1.0.5 replaces PowerShell-only `commandWindows` entries with native

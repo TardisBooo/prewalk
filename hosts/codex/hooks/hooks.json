@@ -6,7 +6,7 @@
           {
             "type": "command",
             "command": "./scripts/prewalk_pause.sh",
-            "commandWindows": "python %PLUGIN_ROOT%\\hooks\\pause_detect.py",
+            "commandWindows": "python ${PLUGIN_ROOT}/hooks/pause_detect.py",
             "timeout": 30
           }
         ]
@@ -19,7 +19,7 @@
           {
             "type": "command",
             "command": "./scripts/prewalk_executor_router.sh",
-            "commandWindows": "python %PLUGIN_ROOT%\\hooks\\executor_router.py",
+            "commandWindows": "python ${PLUGIN_ROOT}/hooks/executor_router.py",
             "timeout": 30,
             "statusMessage": "prewalk executor route check"
           }
@@ -33,7 +33,7 @@
           {
             "type": "command",
             "command": "./scripts/prewalk_todo_tracker.sh",
-            "commandWindows": "python %PLUGIN_ROOT%\\hooks\\todo_tracker.py",
+            "commandWindows": "python ${PLUGIN_ROOT}/hooks/todo_tracker.py",
             "timeout": 30,
             "statusMessage": "prewalk todo tracker"
           }
@@ -45,7 +45,7 @@
           {
             "type": "command",
             "command": "./scripts/prewalk_edit_tracker.sh",
-            "commandWindows": "python %PLUGIN_ROOT%\\hooks\\edit_tracker.py",
+            "commandWindows": "python ${PLUGIN_ROOT}/hooks/edit_tracker.py",
             "timeout": 30,
             "statusMessage": "prewalk edit tracker"
           }
@@ -57,7 +57,7 @@
           {
             "type": "command",
             "command": "./scripts/prewalk_executor_router.sh",
-            "commandWindows": "python %PLUGIN_ROOT%\\hooks\\executor_router.py",
+            "commandWindows": "python ${PLUGIN_ROOT}/hooks/executor_router.py",
             "timeout": 30,
             "statusMessage": "prewalk executor binding"
           }
@@ -71,7 +71,7 @@
           {
             "type": "command",
             "command": "./scripts/prewalk_executor_router.sh",
-            "commandWindows": "python %PLUGIN_ROOT%\\hooks\\executor_router.py",
+            "commandWindows": "python ${PLUGIN_ROOT}/hooks/executor_router.py",
             "timeout": 30,
             "statusMessage": "prewalk executor completion"
           }
